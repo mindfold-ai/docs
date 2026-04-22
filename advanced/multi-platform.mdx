@@ -42,9 +42,9 @@ After that, on platforms with a SessionStart hook, opening a new session auto-in
 | Sub-agent PreToolUse hook           |     ✅      |   ✅   |    ✅    |  ❌   |  ❌  |   ❌   |  ❌   |    ✅     |   ❌    |  ✅   |
 | Sub-agents (`trellis-*`)            |     ✅      |   ✅   |    ✅    |  ✅   |  ✅  |   ✅   |  ✅   |    ✅     |   ✅    |  ✅   |
 | Auto-trigger skills                 |     ✅      |   ✅   |    ✅    |  ✅   |  ✅  |   ✅   |  ✅   |    ✅     |   ✅    |  ✅   |
-| Explicit `/trellis:*` commands      |     ✅      |   ✅   |    ✅    |   —   |  —   |   ✅   |  —    |    ✅     |   ✅    |  ✅   |
+| Explicit `/trellis:*` commands      |     ✅      |   ✅   |    ✅    |   —   |  —   |   ✅   |  ✅   |    ✅     |   ✅    |  ✅   |
 
-Legend: ✅ Trellis wires the config and the platform executes it · ⚡ Partial (Codex requires `codex_hooks = true` opt-in; Kiro's Agent Hooks are user-configured, not auto-executed) · ❌ the platform does not expose this event · — the platform has no command primitive; start / finish-work / continue are delivered as skills instead
+Legend: ✅ Trellis wires the config and the platform executes it · ⚡ Partial (Codex requires `codex_hooks = true` opt-in; Kiro's Agent Hooks are user-configured, not auto-executed) · ❌ the platform does not expose this event · — the platform has no command primitive; start / finish-work / continue are delivered as skills instead. Qoder uses `/trellis-{name}` (hyphen, not colon) via its native Custom Commands for `finish-work` / `continue`; `start` is covered by its SessionStart hook.
 
 `.kilocode/`, `.agent/` (Antigravity), and `.windsurf/` are workflow-and-skill only: no sub-agents and no hooks. `.agents/skills/` is written by every platform as a cross-platform shared layer.
 
@@ -148,10 +148,11 @@ Layout:
 trellis init -u your-name --qoder
 ```
 
-Qoder does support Custom Commands (typed with `/` in the agent input, stored under `~/.qoder/commands/` or `<project>/.qoder/commands/`), but Trellis's design choice is to deliver everything as auto-trigger skills on Qoder, leaving `.qoder/commands/` free for your own custom commands.
+Qoder supports native Custom Commands (typed with `/` in the agent input, stored under `<project>/.qoder/commands/{name}.md` with required `name` + `description` YAML frontmatter). Trellis delivers session-boundary entry points there so you can invoke them deterministically, and keeps the phase-level workflows as auto-trigger skills.
 
 Layout:
-- `.qoder/skills/trellis-{name}/SKILL.md`: **all** templates (start, finish-work, continue, brainstorm, before-dev, check, update-spec, break-loop) delivered as skills; skill matching drives everything
+- `.qoder/commands/trellis-{name}.md`: session-boundary commands — `finish-work`, `continue` — invoked as `/trellis-finish-work`, `/trellis-continue` (Qoder's SessionStart hook already injects the "start" context, so there is no `trellis-start` command)
+- `.qoder/skills/trellis-{name}/SKILL.md`: auto-trigger workflow skills — `brainstorm`, `before-dev`, `check`, `update-spec`, `break-loop`
 - `.qoder/agents/{name}.md`: sub-agent definitions with pull-based prelude
 - `.qoder/hooks/session-start.py`: SessionStart hook
 - `.qoder/settings.json`: hook configuration (SessionStart only — Qoder has no sub-agent `PreToolUse` hook)

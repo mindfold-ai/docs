@@ -19,6 +19,7 @@ Trellis groups the 13 configured platforms into three delivery models:
 | OpenCode        | `.opencode/commands/trellis/{name}.md`         | `/trellis:{name}`          |
 | Codex           | `.codex/prompts/trellis-{name}.md`             | `/trellis-{name}`          |
 | Gemini CLI      | `.gemini/commands/trellis/{name}.toml`         | `/trellis:{name}`          |
+| Qoder           | `.qoder/commands/trellis-{name}.md` (with `name` + `description` YAML frontmatter) | `/trellis-{name}` |
 | CodeBuddy       | `.codebuddy/commands/trellis/{name}.md`        | `/trellis:{name}`          |
 | Droid           | `.factory/commands/trellis/{name}.md`          | `/trellis:{name}`          |
 | Copilot         | `.github/prompts/trellis-{name}.prompt.md`     | prompt-file picker         |
@@ -38,7 +39,6 @@ Command files are Markdown; Gemini uses TOML (with a `prompt = """..."""` field)
 | Platform | `start` / `finish-work` / `continue` as… | Invoked as                          |
 | -------- | ---------------------------------------- | ----------------------------------- |
 | Kiro     | `.kiro/skills/trellis-{name}/SKILL.md`   | skill match (or `@trellis:{name}`)  |
-| Qoder    | `.qoder/skills/trellis-{name}/SKILL.md`  | auto-triggered by user intent match |
 
 ### When to use a command vs. a skill
 

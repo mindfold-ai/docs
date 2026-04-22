@@ -17,7 +17,7 @@ Trellis 每个平台原生带 **3 个**用户调用的命令（`start`、`finish
 | Kilo | `/start.md` | `/finish-work.md` | `/continue.md` | Workflow 文件（`.kilocode/workflows/`） |
 | Antigravity / Windsurf | workflow 选择器 → `start` / `finish-work` / `continue` | | | Workflow 文件 |
 | GitHub Copilot | Run Prompt → `trellis-start` / `trellis-finish-work` / `trellis-continue` | | | Prompt 文件（`.github/prompts/`） |
-| Qoder | （skill 选择器）`start` / `finish-work` / `continue` | | | Skill——Qoder 原生 Custom Commands 留给用户自己用 |
+| Qoder | （SessionStart hook 自动注入 `start`） | `/trellis-finish-work` | `/trellis-continue` | Qoder 原生 Custom Command（`.qoder/commands/trellis-{name}.md`） |
 
 ### Auto-trigger Skill
 

@@ -42,9 +42,9 @@ Trellis 支持 13 个平台（Claude Code、Cursor、OpenCode、Codex、Kiro、K
 | Sub-agent PreToolUse hook           |     ✅      |   ✅   |    ✅    |  ❌   |  ❌  |   ❌   |  ❌   |    ✅     |   ❌    |  ✅   |
 | Sub-agent（`trellis-*`）            |     ✅      |   ✅   |    ✅    |  ✅   |  ✅  |   ✅   |  ✅   |    ✅     |   ✅    |  ✅   |
 | Auto-trigger skill                  |     ✅      |   ✅   |    ✅    |  ✅   |  ✅  |   ✅   |  ✅   |    ✅     |   ✅    |  ✅   |
-| 显式 `/trellis:*` 命令              |     ✅      |   ✅   |    ✅    |   —   |   —  |   ✅   |  —    |    ✅     |   ✅    |  ✅   |
+| 显式 `/trellis:*` 命令              |     ✅      |   ✅   |    ✅    |   —   |   —  |   ✅   |  ✅   |    ✅     |   ✅    |  ✅   |
 
-图例：✅ Trellis 写入配置并由平台执行 · ⚡ 部分支持（Codex 需 `codex_hooks = true` 开启；Kiro 的 Agent Hook 需用户自行 wiring） · ❌ 平台不暴露这个事件 · — 该平台没有命令原语，start / finish-work / continue 作为 skill 交付
+图例：✅ Trellis 写入配置并由平台执行 · ⚡ 部分支持（Codex 需 `codex_hooks = true` 开启；Kiro 的 Agent Hook 需用户自行 wiring） · ❌ 平台不暴露这个事件 · — 该平台没有命令原语，start / finish-work / continue 作为 skill 交付。Qoder 用的是 `/trellis-{name}`（连字符，不是冒号），通过原生 Custom Commands 交付 `finish-work` / `continue`；`start` 由 SessionStart hook 自动注入。
 
 `.kilocode/`、`.agent/`（Antigravity）、`.windsurf/` 只有 workflow 和 skill，没有 sub-agent 也没有 hook。`.agents/skills/` 在所有平台都会写一份，作为跨平台共享层。
 
@@ -148,10 +148,11 @@ trellis init -u your-name --gemini
 trellis init -u your-name --qoder
 ```
 
-Qoder 本身支持 Custom Commands（在 Agent 输入框输入 `/` 调用，存放在 `~/.qoder/commands/` 或 `<项目>/.qoder/commands/`），但 Trellis 在 Qoder 上的设计选择是全部以 auto-trigger skill 交付，把 `.qoder/commands/` 留给用户自己的 Custom Commands：
+Qoder 原生支持 Custom Commands（在 Agent 输入框输入 `/` 调用，项目级存放在 `<项目>/.qoder/commands/{name}.md`，要求 YAML frontmatter 包含 `name` 和 `description` 字段）。Trellis 把 session-boundary 命令放到这里，让你可以显式地调用；阶段级工作流则保留为 auto-trigger skill。
 
 布局：
-- `.qoder/skills/trellis-{name}/SKILL.md`：**所有**模板（start、finish-work、continue、brainstorm、before-dev、check、update-spec、break-loop）都以 skill 形式交付，靠 skill 匹配驱动
+- `.qoder/commands/trellis-{name}.md`：session-boundary 命令 —— `finish-work`、`continue`，用 `/trellis-finish-work`、`/trellis-continue` 调用（`start` 由 Qoder 的 SessionStart hook 自动注入，无需命令）
+- `.qoder/skills/trellis-{name}/SKILL.md`：auto-trigger 工作流 skill —— `brainstorm`、`before-dev`、`check`、`update-spec`、`break-loop`
 - `.qoder/agents/{name}.md`：带 pull-based prelude 的 sub-agent 定义
 - `.qoder/hooks/session-start.py`：SessionStart hook
 - `.qoder/settings.json`：hook 配置（只有 SessionStart——Qoder 没有 sub-agent `PreToolUse` hook）

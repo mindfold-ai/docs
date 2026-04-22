@@ -17,7 +17,7 @@ Trellis ships **three** user-invoked commands per platform (`start`, `finish-wor
 | Kilo | `/start.md` | `/finish-work.md` | `/continue.md` | Workflow file (`.kilocode/workflows/`) |
 | Antigravity / Windsurf | workflow picker → `start` / `finish-work` / `continue` | | | Workflow file |
 | GitHub Copilot | Run Prompt → `trellis-start` / `trellis-finish-work` / `trellis-continue` | | | Prompt file (`.github/prompts/`) |
-| Qoder | (skill picker) `start` / `finish-work` / `continue` | | | Skill — Qoder's native Custom Commands are left free for your own use |
+| Qoder | (SessionStart hook auto-injects `start`) | `/trellis-finish-work` | `/trellis-continue` | Native Qoder Custom Command (`.qoder/commands/trellis-{name}.md`) |
 
 ### Auto-trigger Skills
 

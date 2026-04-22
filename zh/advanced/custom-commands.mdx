@@ -19,6 +19,7 @@ Trellis 0.5 只原生带三个 slash 命令（`/trellis:start`、`/trellis:finis
 | OpenCode        | `.opencode/commands/trellis/{name}.md`         | `/trellis:{name}`          |
 | Codex           | `.codex/prompts/trellis-{name}.md`             | `/trellis-{name}`          |
 | Gemini CLI      | `.gemini/commands/trellis/{name}.toml`         | `/trellis:{name}`          |
+| Qoder           | `.qoder/commands/trellis-{name}.md`（YAML frontmatter 含 `name` + `description`） | `/trellis-{name}` |
 | CodeBuddy       | `.codebuddy/commands/trellis/{name}.md`        | `/trellis:{name}`          |
 | Droid           | `.factory/commands/trellis/{name}.md`          | `/trellis:{name}`          |
 | Copilot         | `.github/prompts/trellis-{name}.prompt.md`     | prompt 文件选择器          |
@@ -38,7 +39,6 @@ Trellis 0.5 只原生带三个 slash 命令（`/trellis:start`、`/trellis:finis
 | 平台  | 命令在哪里                               | 调用方式                          |
 | ----- | ---------------------------------------- | --------------------------------- |
 | Kiro  | `.kiro/skills/trellis-{name}/SKILL.md`   | skill 匹配（或 `@trellis:{name}`）|
-| Qoder | `.qoder/skills/trellis-{name}/SKILL.md`  | AI 按意图自动触发                 |
 
 ### 什么时候用命令，什么时候用 skill
 
