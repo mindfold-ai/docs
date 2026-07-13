@@ -40,6 +40,7 @@
                 "group": "Advanced",
                 "pages": [
                   "advanced/architecture",
+                  "advanced/channel",
                   "advanced/roadmap",
                   "advanced/custom-workflow",
                   "advanced/custom-commands",
@@ -270,6 +271,7 @@
                 "group": "进阶",
                 "pages": [
                   "zh/advanced/architecture",
+                  "zh/advanced/channel",
                   "zh/advanced/roadmap",
                   "zh/advanced/custom-workflow",
                   "zh/advanced/custom-commands",
