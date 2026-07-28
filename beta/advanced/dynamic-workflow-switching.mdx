@@ -172,9 +172,8 @@ Workflow ids must match `[A-Za-z0-9_-]+`. This keeps every id inside
 ## Current limits
 
 - Selection is explicit. Trellis does not infer a workflow from task type.
-- Pi Agent and Oh My Pi extensions still read the global
-  `.trellis/workflow.md`; task, personal, and team selection does not apply to
-  those two extensions yet.
+- The Oh My Pi extension still reads the global `.trellis/workflow.md`; task,
+  personal, and team selection does not apply to it yet.
 - OpenCode per-turn breadcrumbs honor dynamic selection, but its SessionStart
   summary still reads the global workflow.
 - Snow SessionStart and per-message context still read the global workflow.

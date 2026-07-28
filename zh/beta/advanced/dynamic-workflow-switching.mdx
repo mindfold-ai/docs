@@ -166,8 +166,8 @@ Workflow id 必须匹配 `[A-Za-z0-9_-]+`，确保所有 id 都只能落在
 ## 当前限制
 
 - 选择是显式的，Trellis 暂时不会根据任务类型自动推断 workflow。
-- Pi Agent 和 Oh My Pi extension 仍然读取全局 `.trellis/workflow.md`；
-  task、personal 和 team 选择目前还不适用于这两个 extension。
+- Oh My Pi extension 仍然读取全局 `.trellis/workflow.md`；task、personal
+  和 team 选择目前还不适用于它。
 - OpenCode 的每轮 breadcrumb 支持动态选择，但 SessionStart 摘要仍读取全局
   workflow。
 - Snow 的 SessionStart 和每轮消息上下文仍读取全局 workflow。
