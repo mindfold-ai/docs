@@ -136,9 +136,9 @@ python3 ./.trellis/scripts/get_context.py --mode spec \
 Hook 不会解析 Claude Code、Codex 或 OpenCode 的 transcript 内容。Transcript
 格式属于宿主内部实现，不是 Trellis 的契约。
 
-匹配和状态故障采用 fail-open：frontmatter 格式错误、路径缺失、状态不可写或
-hook 内部异常，都不能破坏宿主工具调用。唯一有意阻断的情况，是 Codex 或
-OpenCode 刚刚收到完整约束 spec、且交付状态已经成功记录时的第一次修改。
+匹配和状态故障采用 fail-open：frontmatter 格式错误、路径缺失、状态不可读或
+不可写、hook 内部异常，都不能破坏宿主工具调用。唯一有意阻断的情况，是 Codex
+或 OpenCode 刚刚收到完整约束 spec、且交付状态已经成功记录时的第一次修改。
 
 ## 相关页面
 

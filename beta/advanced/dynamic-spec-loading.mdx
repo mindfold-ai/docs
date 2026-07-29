@@ -145,9 +145,10 @@ The hook does not parse Claude Code, Codex, or OpenCode transcript contents.
 Transcript formats are host internals and are not part of this contract.
 
 Matching and state failures are fail-open: malformed frontmatter, missing
-paths, unreadable state, or an internal hook error must not break the host tool
-call. The only intentional block is the first Codex or OpenCode mutation that
-has just received a full governing spec with persisted delivery state.
+paths, unreadable or unwritable state, or an internal hook error must not break
+the host tool call. The only intentional block is the first Codex or OpenCode
+mutation that has just received a full governing spec with persisted delivery
+state.
 
 ## Related pages
 
