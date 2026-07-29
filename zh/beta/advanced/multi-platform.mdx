@@ -40,6 +40,7 @@ Trellis 支持 17 个平台（Claude Code、Cursor、OpenCode、Codex、Kiro、K
 | ------------------------------ | :---------: | :----: | :------: | :---: | :--: | :----: | :---: | :-------: | :-----: | :---: | :------: | :------: |
 | SessionStart / startup context |     ✅      |   ✅   |    ✅    |  ⚡   |  ⚡  |   ✅   |  ✅   |    ✅     |   ✅    |  ✅   |    ✅    |    ✅    |
 | Sub-agent 上下文注入           |     ✅      |   ✅   |    ✅    |  ❌   |  ❌  |   ❌   |  ❌   |    ✅     |   ❌    |  ✅   |    ✅    |    ✅    |
+| 动态 Spec 加载                 |     ✅      |  pull  |    ✅    |  ✅   | pull |  pull  | pull  |   pull    |  pull   | pull  |   pull   |   pull   |
 | Sub-agent（`trellis-*`）       |     ✅      |   ✅   |    ✅    |  ✅   |  ✅  |   ✅   |  ✅   |    ✅     |   ✅    |  ✅   |    ✅    |    ✅    |
 | Auto-trigger skill             |     ✅      |   ✅   |    ✅    |  ✅   |  ✅  |   ✅   |  ✅   |    ✅     |   ✅    |  ✅   |    ✅    |    ✅    |
 | 显式 `/trellis:*` 命令         |     ✅      |   ✅   |    ✅    |   —   |  —   |   ✅   |  ✅   |    ✅     |   ✅    |  ✅   |    ✅    |    ✅    |
@@ -51,6 +52,8 @@ Trellis 支持 17 个平台（Claude Code、Cursor、OpenCode、Codex、Kiro、K
 `/trellis-{name}`（连字符，不是冒号），通过原生 Custom Commands 交付 `finish-work` /
 `continue`；`start` 由 SessionStart hook 自动注入。Pi Agent 走 extension，不走 Python hook 文件，
 但行为一致：会话上下文、Bash 环境变量传递、sub-agent context 注入都在 agent 动作前完成。
+`pull` 表示平台可以通过 `get_context.py --mode spec` 查询约束当前路径的 spec，
+但 Trellis 不会在工具执行时自动推送正文。
 
 `.kilocode/`、`.agent/`（Antigravity）、`.devin/` 只有 workflow 和 skill，没有 sub-agent 也没有 hook。`.agents/skills/` 在所有平台都会写一份，作为跨平台共享层。
 
@@ -95,9 +98,12 @@ OpenCode 1.2.x 是 class-1 平台（真 hook + 真 sub-agent）：
 - `.opencode/commands/trellis/`：start / finish-work / continue
 - `.opencode/agents/`：`trellis-implement.md`、`trellis-check.md`、`trellis-research.md`
 - `.opencode/skills/`：5 个 trellis skill
-- `.opencode/plugins/`：JS 插件：`session-start.js`、`inject-subagent-context.js`、`inject-workflow-state.js`
+- `.opencode/plugins/`：JS 插件：`session-start.js`、`inject-subagent-context.js`、`inject-workflow-state.js`、`inject-spec-context.js`
+- `.opencode/hooks/inject-spec-context.py`：共享的路径匹配、预算和交付状态引擎
 
-插件是 factory function（OpenCode 1.2+）。Trellis 生成的版本对齐 Claude Code 行为。
+插件是 factory function（OpenCode 1.2+）。动态 spec 加载会拦截 `write`、`edit`
+和 `apply_patch`；完整 spec 首次命中时会用模型可见的工具错误阻断这一轮修改，
+模型重试后正常执行。
 
 ### Codex
 

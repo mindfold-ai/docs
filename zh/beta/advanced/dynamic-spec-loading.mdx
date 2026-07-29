@@ -53,27 +53,30 @@ Trellis 会为每个匹配的 spec 选择以下交付方式之一：
 
 ## 不同平台的行为
 
-| 平台        | 触发点                                                | 行为                                                                                       |
-| ----------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| Claude Code | `Read`、`Edit`、`Write`、`MultiEdit` 的 `PostToolUse` | 文件操作后交付匹配上下文。Claude Code 本身要求写前先读，因此通常会在后续编辑前先加载规则。 |
-| Codex       | 原生 `apply_patch` 的 `PreToolUse`                    | 在 patch 执行前解析所有新增、修改、删除和移动文件的 header。                               |
-| 其他平台    | Pull mode                                             | 通过 `get_context.py` 主动查询匹配的 spec 路径。                                           |
+| 平台        | 触发点                                                  | 行为                                                                                       |
+| ----------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Claude Code | `Read`、`Edit`、`Write`、`MultiEdit` 的 `PostToolUse`   | 文件操作后交付匹配上下文。Claude Code 本身要求写前先读，因此通常会在后续编辑前先加载规则。 |
+| Codex       | 原生 `apply_patch` 的 `PreToolUse`                      | 在 patch 执行前解析所有新增、修改、删除和移动文件的 header。                               |
+| OpenCode    | `write`、`edit`、`apply_patch` 的 `tool.execute.before` | 新规则首次命中时阻断一次，把 spec 作为模型可见的工具错误交付，然后放行模型重试。           |
+| 其他平台    | Pull mode                                               | 通过 `get_context.py` 主动查询匹配的 spec 路径。                                           |
 
-### 为什么 Codex 会把第一次 patch 拦下一次
+### 为什么 Codex 和 OpenCode 会把第一次修改拦下一次
 
-Codex 不要求修改文件前必须先读文件。第一次 patch 匹配到 spec 时，hook 会返回
-完整规则，并拒绝这一轮 patch：
+Codex 和 OpenCode 都不要求修改文件前必须先读文件。第一次修改匹配到 spec 时，
+Trellis 会返回完整规则，并阻断这一轮调用：
 
 ```text
-发起 patch
+发起修改
   → Trellis 注入约束该文件的 spec
-  → 本轮 patch 被拒绝
-  → Codex 读取 spec 后重试
+  → 本轮修改被阻断
+  → 模型读取 spec 后重试
   → 重试正常执行
 ```
 
 只有刚刚交付了**完整** spec 才会拦截。短 ticket 不会阻断；未变化且仍在刷新窗口
-内的 spec 不会产生输出。这是一次上下文交付握手，不是策略拒绝。
+内的 spec 不会产生输出。Codex 使用原生 hook deny；OpenCode 的稳定 plugin API
+没有直接返回 `additionalContext` 的字段，因此上下文会放进工具错误里。这是一次
+上下文交付握手，不是策略拒绝。
 
 ## 配置预算和刷新窗口
 
@@ -88,13 +91,13 @@ spec_injection:
   tools: [Read, Edit, Write, MultiEdit]
 ```
 
-| 配置项                   | 含义                                                                                                      |
-| ------------------------ | --------------------------------------------------------------------------------------------------------- |
-| `enabled`                | 设为 `false` 可关闭动态 spec 加载。                                                                       |
-| `max_spec_chars`         | 单个 spec 的最大字符数。`0` 表示不限制。                                                                  |
-| `max_total_chars`        | 单次 hook 事件的最大字符数。`0` 表示不限制。                                                              |
-| `refresh_window_seconds` | 未变化 spec 经过多少秒后发送短 ticket。`0` 表示关闭按时间刷新。                                           |
-| `tools`                  | 可以触发匹配的 Claude Code 工具名。Codex 的 `apply_patch` 映射为逻辑上的 `Edit`。空列表表示禁用全部触发。 |
+| 配置项                   | 含义                                                                                                                                                       |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `enabled`                | 设为 `false` 可关闭动态 spec 加载。                                                                                                                        |
+| `max_spec_chars`         | 单个 spec 的最大字符数。`0` 表示不限制。                                                                                                                   |
+| `max_total_chars`        | 单次 hook 事件的最大字符数。`0` 表示不限制。                                                                                                               |
+| `refresh_window_seconds` | 未变化 spec 经过多少秒后发送短 ticket。`0` 表示关闭按时间刷新。                                                                                            |
+| `tools`                  | 可以触发匹配的逻辑工具名。Codex 和 OpenCode 的 `apply_patch` 映射为 `Edit`；OpenCode 的 `write` / `edit` 映射为 `Write` / `Edit`。空列表表示禁用全部触发。 |
 
 正文被截断时会附带完整 spec 路径，Agent 可以继续读取源文件。
 
@@ -125,15 +128,17 @@ python3 ./.trellis/scripts/get_context.py --mode spec \
 ## 状态、reset 与失败行为
 
 交付状态保存在仓库外的 `~/.trellis/spec-inject/`。父 Agent 和 sub-agent
-使用独立的交付历史。`SessionStart(source=clear|compact)` 会为当前 session
-记录共享 reset 标记，因此被压缩掉的规则会在下一次匹配时重新交付。
+使用独立的交付历史。Claude Code 和 Codex 用
+`SessionStart(source=clear|compact)` 记录共享 reset 标记。OpenCode 会把
+`session.compacted` 映射为相同的 compact reset，因此被压缩掉的规则会在下一次
+匹配时重新交付。
 
-Hook 不会解析 Claude Code 或 Codex 的 transcript 内容。Transcript 格式属于
-宿主内部实现，不是 Trellis 的契约。
+Hook 不会解析 Claude Code、Codex 或 OpenCode 的 transcript 内容。Transcript
+格式属于宿主内部实现，不是 Trellis 的契约。
 
 匹配和状态故障采用 fail-open：frontmatter 格式错误、路径缺失、状态不可写或
-hook 内部异常，都不能破坏宿主工具调用。唯一有意阻断的情况，是 Codex 刚刚
-收到完整约束 spec 时的第一次 patch。
+hook 内部异常，都不能破坏宿主工具调用。唯一有意阻断的情况，是 Codex 或
+OpenCode 刚刚收到完整约束 spec、且交付状态已经成功记录时的第一次修改。
 
 ## 相关页面
 

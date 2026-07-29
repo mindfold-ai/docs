@@ -41,6 +41,7 @@ After that, on platforms with a SessionStart hook or extension, opening a new se
 | ------------------------------ | :---------: | :----: | :------: | :---: | :--: | :----: | :---: | :-------: | :-----: | :---: | :------: | :------: |
 | SessionStart / startup context |     ✅      |   ✅   |    ✅    |  ⚡   |  ⚡  |   ✅   |  ✅   |    ✅     |   ✅    |  ✅   |    ✅    |    ✅    |
 | Sub-agent context injection    |     ✅      |   ✅   |    ✅    |  ❌   |  ❌  |   ❌   |  ❌   |    ✅     |   ❌    |  ✅   |    ✅    |    ✅    |
+| Dynamic spec loading           |     ✅      |  pull  |    ✅    |  ✅   | pull |  pull  | pull  |   pull    |  pull   | pull  |   pull   |   pull   |
 | Sub-agents (`trellis-*`)       |     ✅      |   ✅   |    ✅    |  ✅   |  ✅  |   ✅   |  ✅   |    ✅     |   ✅    |  ✅   |    ✅    |    ✅    |
 | Auto-trigger skills            |     ✅      |   ✅   |    ✅    |  ✅   |  ✅  |   ✅   |  ✅   |    ✅     |   ✅    |  ✅   |    ✅    |    ✅    |
 | Explicit `/trellis:*` commands |     ✅      |   ✅   |    ✅    |   —   |  —   |   ✅   |  ✅   |    ✅     |   ✅    |  ✅   |    ✅    |    ✅    |
@@ -56,7 +57,9 @@ not colon) via its native Custom Commands for `finish-work` / `continue`; `start
 is covered by its SessionStart hook. Pi Agent uses an extension rather than
 Python hook files, but the behavior is the same: session context, Bash
 environment propagation, and sub-agent context injection are handled before the
-agent acts.
+agent acts. `pull` means the platform can resolve governing spec paths through
+`get_context.py --mode spec`, but Trellis does not push those specs into tool
+execution automatically.
 
 `.kilocode/`, `.agent/` (Antigravity), and `.devin/` are workflow-and-skill only: no sub-agents and no hooks. `.agents/skills/` is written by every platform as a cross-platform shared layer.
 
@@ -101,9 +104,12 @@ OpenCode 1.2.x is a class-1 platform (real hooks + real sub-agents):
 - `.opencode/commands/trellis/`: start / finish-work / continue
 - `.opencode/agents/`: `trellis-implement.md`, `trellis-check.md`, `trellis-research.md`
 - `.opencode/skills/`: the 5 trellis skills
-- `.opencode/plugins/`: JS plugins: `session-start.js`, `inject-subagent-context.js`, `inject-workflow-state.js`
+- `.opencode/plugins/`: JS plugins: `session-start.js`, `inject-subagent-context.js`, `inject-workflow-state.js`, `inject-spec-context.js`
+- `.opencode/hooks/inject-spec-context.py`: shared path matching, budgets, and delivery state
 
-Plugins are factory functions (OpenCode 1.2+). Trellis generates them so behavior parity with Claude Code is the goal.
+Plugins are factory functions (OpenCode 1.2+). Dynamic spec loading intercepts
+`write`, `edit`, and `apply_patch`; a newly matched full spec blocks the first
+mutation as a model-visible tool error, then the retry proceeds.
 
 ### Codex
 

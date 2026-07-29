@@ -62,24 +62,28 @@ remaining matches become an index of spec paths instead of disappearing.
 | --------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
 | Claude Code     | `PostToolUse` for `Read`, `Edit`, `Write`, and `MultiEdit` | Delivers matching context after the file operation. Claude Code's read-before-write behavior usually loads the rules before the later edit. |
 | Codex           | `PreToolUse` for native `apply_patch`                      | Parses every add, update, delete, and move header before the patch runs.                                                                    |
+| OpenCode        | `tool.execute.before` for `write`, `edit`, `apply_patch`   | Blocks a newly governed mutation once, returns the specs as a model-visible tool error, then allows the model's retry.                      |
 | Other platforms | Pull mode                                                  | Query matching spec paths explicitly with `get_context.py`.                                                                                 |
 
-### Why Codex blocks the first patch once
+### Why Codex and OpenCode block the first mutation once
 
-Codex does not require a file read before an edit. When a patch first matches a
-spec, the hook returns the full rules and denies that patch once:
+Codex and OpenCode do not require a file read before an edit. When a mutation
+first matches a spec, Trellis returns the full rules and blocks that call once:
 
 ```text
-patch requested
+mutation requested
   → Trellis injects governing specs
-  → patch is denied
-  → Codex reads the specs and retries
+  → mutation is blocked
+  → the model reads the specs and retries
   → retry proceeds
 ```
 
 Only a newly delivered **full** spec blocks the patch. A short refresh ticket
 does not block, and an unchanged spec inside the refresh window produces no
-output. This is a context-delivery handshake, not a policy rejection.
+output. Codex receives a native hook denial. OpenCode receives the same context
+inside a tool error because its stable plugin API has no direct
+`additionalContext` return field. This is a context-delivery handshake, not a
+policy rejection.
 
 ## Configure the budget and refresh window
 
@@ -94,13 +98,13 @@ spec_injection:
   tools: [Read, Edit, Write, MultiEdit]
 ```
 
-| Key                      | Meaning                                                                                                                                      |
-| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `enabled`                | Set to `false` to disable dynamic spec loading.                                                                                              |
-| `max_spec_chars`         | Maximum characters from one spec. `0` removes this limit.                                                                                    |
-| `max_total_chars`        | Maximum characters for one hook event. `0` removes this limit.                                                                               |
-| `refresh_window_seconds` | Seconds before an unchanged spec gets a short ticket. `0` disables time-based refresh.                                                       |
-| `tools`                  | Claude Code tool names that can trigger matching. Codex `apply_patch` uses the logical `Edit` trigger. An empty list disables every trigger. |
+| Key                      | Meaning                                                                                                                                                                              |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `enabled`                | Set to `false` to disable dynamic spec loading.                                                                                                                                      |
+| `max_spec_chars`         | Maximum characters from one spec. `0` removes this limit.                                                                                                                            |
+| `max_total_chars`        | Maximum characters for one hook event. `0` removes this limit.                                                                                                                       |
+| `refresh_window_seconds` | Seconds before an unchanged spec gets a short ticket. `0` disables time-based refresh.                                                                                               |
+| `tools`                  | Logical tool names that can trigger matching. Codex and OpenCode `apply_patch` use `Edit`; OpenCode `write` and `edit` use `Write` and `Edit`. An empty list disables every trigger. |
 
 Truncated bodies include a notice with the full spec path so the agent can read
 the source file directly.
@@ -133,16 +137,17 @@ An empty match is valid and returns no governing specs.
 
 Delivery state is stored outside the repository under
 `~/.trellis/spec-inject/`. Parent and sub-agent histories are separate.
-`SessionStart(source=clear|compact)` records a reset marker shared by that
-session, so rules removed by compaction are delivered again.
+Claude Code and Codex use `SessionStart(source=clear|compact)` to record a
+shared reset marker. OpenCode maps `session.compacted` to the same compact
+reset, so rules removed by compaction are delivered again.
 
-The hook does not parse Claude Code or Codex transcript contents. Transcript
-formats are host internals and are not part of this contract.
+The hook does not parse Claude Code, Codex, or OpenCode transcript contents.
+Transcript formats are host internals and are not part of this contract.
 
 Matching and state failures are fail-open: malformed frontmatter, missing
 paths, unreadable state, or an internal hook error must not break the host tool
-call. The only intentional block is the first Codex patch that has just
-received a full governing spec.
+call. The only intentional block is the first Codex or OpenCode mutation that
+has just received a full governing spec with persisted delivery state.
 
 ## Related pages
 
