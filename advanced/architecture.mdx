@@ -146,7 +146,7 @@ Important files:
 | File              | Purpose                                                                                                  |
 | ----------------- | -------------------------------------------------------------------------------------------------------- |
 | `task.json`       | Status, priority, assignee, branch, PR URL, parent/child relationships, and extension metadata.          |
-| `prd.md`          | Requirements, constraints, acceptance criteria, and out-of-scope items.                                  |
+| `prd.md`          | Goal, Requirements, and User-visible Outcomes; technical design, execution, and evidence live in companion artifacts. |
 | `design.md`       | Technical design for complex tasks: boundaries, contracts, data flow, compatibility, tradeoffs.          |
 | `implement.md`    | Execution plan for complex tasks: ordered checklist, validation commands, review gates, rollback points. |
 | `implement.jsonl` | Spec and research manifest for implementation context.                                                   |
@@ -278,3 +278,10 @@ For local customization, use the bundled `trellis-meta` skill as the map. It tel
 | Change hook behavior                                       | Platform hook settings plus `.trellis/scripts/` hook implementations                            |
 | Change implement/check agent behavior                      | Platform agent files and task JSONL context rules                                               |
 | Add team-specific coding rules                             | `.trellis/spec/` or a project-local skill                                                       |
+<!-- prd-contract:START -->
+
+## PRD contract boundary
+
+The task system keeps product intent in the three fixed PRD sections and puts technical design, execution, and evidence in their own artifacts.
+
+<!-- prd-contract:END -->

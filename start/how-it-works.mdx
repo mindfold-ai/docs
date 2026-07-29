@@ -137,7 +137,7 @@ trust.
 
 | Artifact          | Required when               | Purpose                                                                                 |
 | ----------------- | --------------------------- | --------------------------------------------------------------------------------------- |
-| `prd.md`          | every task                  | Requirements, constraints, acceptance criteria, and out-of-scope items.                 |
+| `prd.md`          | every task                  | Goal, Requirements, and User-visible Outcomes; technical design, execution, and evidence live in companion artifacts. |
 | `design.md`       | complex tasks               | Technical design: boundaries, contracts, data flow, compatibility, tradeoffs, rollback. |
 | `implement.md`    | complex tasks               | Execution plan: ordered checklist, validation commands, review gates, rollback points.  |
 | `research/*.md`   | when investigation matters  | Durable facts discovered during planning.                                               |
@@ -285,3 +285,10 @@ After the flow completes, durable state lives in files:
 The next AI session reads the repository state again. It does not need the
 previous chat transcript to know what the task was, what specs apply, or what
 workflow step comes next.
+<!-- prd-contract:START -->
+
+## Planning artifact boundary
+
+The PRD is the human-readable contract: `Goal`, `Requirements`, then `User-visible Outcomes`. Technical design, execution commands, and source evidence belong in `design.md`, `implement.md`, and `research/`.
+
+<!-- prd-contract:END -->

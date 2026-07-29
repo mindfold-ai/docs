@@ -178,9 +178,9 @@ frontend states, tests, and rollout risks.
 
 ## Goal
 
-Workspace admins can invite teammates by email and manage pending invites.
+1. Let workspace admins invite teammates by email and manage pending invites.
 
-## In scope
+## Requirements
 
 - Create invite
 - Resend invite
@@ -188,18 +188,12 @@ Workspace admins can invite teammates by email and manage pending invites.
 - Accept invite
 - Expiration handling
 
-## Out of scope
+## User-visible Outcomes
 
-- Bulk CSV import
-- SSO provisioning
-- Role templates
-
-## Acceptance criteria
-
-- Non-admin users cannot create, resend, or revoke invites.
-- Expired invites show a recoverable error.
-- Invite acceptance is idempotent.
-- Tests cover permission checks and expired invite behavior.
+- [ ] Non-admin users cannot create, resend, or revoke invites.
+- [ ] Expired invites show a recoverable error.
+- [ ] Invite acceptance is idempotent.
+- [ ] Tests cover permission checks and expired invite behavior.
 ```
 
 ### 3.4 Task and subtask split
@@ -402,3 +396,10 @@ If you are unsure which scenario applies, start with one of these:
     Pilot Trellis in one repo before expanding usage.
   </Card>
 </CardGroup>
+<!-- prd-contract:START -->
+
+## Planning example boundary
+
+Keep user goals, required behavior, and observable outcomes in the PRD; move implementation details and repository evidence to their dedicated artifacts.
+
+<!-- prd-contract:END -->

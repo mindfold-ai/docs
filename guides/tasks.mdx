@@ -41,7 +41,7 @@ This creates the task directory with default files. Then edit `prd.md` to define
 
 ### prd.md
 
-Write what you're building. Be specific about requirements and acceptance criteria.
+Write what users need and what they can verify. Use the fixed Goal, Requirements, and User-visible Outcomes sections; keep technical design, execution, and evidence in their companion artifacts.
 
 ```markdown
 # User Authentication
@@ -139,3 +139,10 @@ Typical flow:
 6. Archive when complete: `task.py archive <id>`
 
 The task system keeps context organized so the AI knows what to focus on.
+<!-- prd-contract:START -->
+
+## PRD contract
+
+New task PRDs use `Goal`, `Requirements`, and `User-visible Outcomes` in that order. Goals are ordered lists and outcomes are verifiable checklists. Keep technical design in `design.md`, execution in `implement.md`, and source evidence in `research/`. UI tasks require explicit prototype approval before implementation starts.
+
+<!-- prd-contract:END -->

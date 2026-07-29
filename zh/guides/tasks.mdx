@@ -37,11 +37,11 @@ description: '用任务系统追踪工作'
 python3 .trellis/scripts/task.py create "user-auth" --assignee taosu
 ```
 
-这会创建任务目录和默认文件。然后编辑 `prd.md` 写需求。
+这会创建任务目录和默认文件。然后编辑 `prd.md`，按固定的目标、需求和用户可见结果组织内容。
 
 ### prd.md
 
-写你要做什么。需求和验收标准要具体。
+写用户需要什么以及能验证什么。使用固定的目标、需求和用户可见结果章节；技术设计、执行和证据放入配套产物。
 
 ```markdown
 # 用户认证
@@ -139,3 +139,10 @@ python3 .trellis/scripts/task.py start other-task-id
 6. 归档：`task.py archive <id>`
 
 任务系统把上下文组织好，让 AI 知道该关注什么。
+<!-- prd-contract:START -->
+
+## PRD 合同
+
+新任务 PRD 按顺序使用“目标”“需求”“用户可见结果”。目标为有序列表，结果为可核验检查清单。技术设计进入 `design.md`，执行进入 `implement.md`，源码证据进入 `research/`；UI 任务必须在开发前获得用户的原型确认。
+
+<!-- prd-contract:END -->

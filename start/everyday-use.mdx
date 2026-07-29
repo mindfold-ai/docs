@@ -135,7 +135,7 @@ Turns an approved planning request into concrete artifacts:
 
 - Inspects code, tests, configs, docs, existing specs, and task history before asking questions.
 - Proposes a task name and slug, then creates the task via `task.py create` when needed.
-- Drafts and iterates `prd.md` with requirements and acceptance criteria.
+- Drafts and iterates `prd.md` with Goal, Requirements, and User-visible Outcomes.
 - Asks one question at a time, including the recommended answer.
 - For complex tasks, adds `design.md` and `implement.md` before implementation starts.
 
@@ -758,3 +758,10 @@ The bar: specific, actionable, with a code example, with a stated _why_, and —
 `trellis init` also creates a bootstrap task (`00-bootstrap-guidelines`). In the first Trellis session, the AI recognizes it, runs `trellis-research` across your code, and fills the empty templates under `frontend/` / `backend/` / `guides/` with specs grounded in your actual project — tech stack, conventions, directory shape, all pulled from the code.
 
 ---
+<!-- prd-contract:START -->
+
+## PRD before implementation
+
+Use the fixed Goal, Requirements, and User-visible Outcomes contract before `task.py start`. A UI prototype remains `pending_user_approval` until the user explicitly approves it.
+
+<!-- prd-contract:END -->

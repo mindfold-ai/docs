@@ -33,6 +33,10 @@ User-set `model` / `model_reasoning_effort` in `.codex/agents/trellis-*.toml` no
 - `task.py list` renders a task with a dangling parent reference flat instead of hiding it (#402).
 - `task.py create --meta key=value` (repeatable) and a new `task.py set-meta` subcommand expose the `task.json` `meta` field.
 
+### Human-readable PRD contract
+
+Newly generated PRDs use locale-matched `Goal`, `Requirements`, and `User-visible Outcomes` headings in that order; Chinese output uses `目标`, `需求`, and `用户可见结果`. Technical design, execution, and source evidence now belong in `design.md`, `implement.md`, and `research/`; UI tasks remain in planning until the user approves the prototype. Mermaid diagrams mark critical paths with labelled red nodes and links. `pnpm check:prd-contract` detects drift across templates, workflow, skills, Marketplace copies, and real English/Chinese task generation. Bootstrap, joiner, and migration task writers use the same PRD contract and move their technical or execution detail into the companion artifacts.
+
 ## Bug Fixes
 
 ### Kimi research persistence

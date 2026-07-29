@@ -128,7 +128,7 @@ Planning 把用户请求转换成 implementation 和 review 可以信任的文�
 
 | Artifact          | 什么时候需要           | 作用                                                       |
 | ----------------- | ---------------------- | ---------------------------------------------------------- |
-| `prd.md`          | 每个任务               | 需求、约束、验收标准、out-of-scope。                       |
+| `prd.md`          | 每个任务               | 目标、需求、用户可见结果；技术设计、执行和证据分别进入配套产物。 |
 | `design.md`       | 复杂任务               | 技术设计：边界、contract、数据流、兼容性、取舍、回滚方式。 |
 | `implement.md`    | 复杂任务               | 执行计划：有序 checklist、验证命令、review gate、回滚点。  |
 | `research/*.md`   | 需要调研时             | Planning 阶段发现的持久事实。                              |
@@ -271,3 +271,10 @@ Phase 3.4 里，主会话会：
 
 下一次 AI 会话会重新读取仓库状态。它不需要上一段聊天记录，也能知道任务是什么、
 哪些 spec 适用、下一步该执行哪个 workflow step。
+<!-- prd-contract:START -->
+
+## 规划产物边界
+
+PRD 是人读合同，顺序为“目标”“需求”“用户可见结果”；技术设计、执行命令和源码证据分别进入 `design.md`、`implement.md`、`research/`。
+
+<!-- prd-contract:END -->

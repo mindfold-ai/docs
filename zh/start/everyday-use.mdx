@@ -131,7 +131,7 @@ Skill 不需要显式命令，平台根据用户意图自动匹配。匹配不�
 
 - 先检查代码、测试、配置、文档、现有 spec 和任务历史，再问用户问题。
 - 产出任务名和 slug；需要时通过 `task.py create` 创建 task。
-- 起草并迭代 `prd.md`，记录需求和验收标准。
+- 起草并迭代 `prd.md`，记录目标、需求和用户可见结果。
 - 一次只问一个问题，并给出推荐答案。
 - 复杂任务在实现前补齐 `design.md` 和 `implement.md`。
 
@@ -748,3 +748,10 @@ await Promise.all(users.map((user) => prisma.user.create({ data: user })));
 ### 3.4 Bootstrap 引导首次填充
 
 `trellis init` 会同时建一个 bootstrap 任务（`00-bootstrap-guidelines`）。第一次 Trellis 会话里，AI 会认出它，调 `trellis-research` 扫一遍你的代码，然后把 `frontend/` / `backend/` / `guides/` 下那堆空模板按你的真实项目填起来——技术栈、约定、目录结构都从代码里读出来。
+<!-- prd-contract:START -->
+
+## 开发前的 PRD
+
+在 `task.py start` 前使用固定的“目标”“需求”“用户可见结果”合同。UI 原型在用户明确确认前保持 `pending_user_approval`。
+
+<!-- prd-contract:END -->

@@ -33,6 +33,10 @@ description: '2026-07-24'
 - `task.py list` 对带悬空父引用的任务改为平铺显示,而不是隐藏(#402)。
 - `task.py create --meta key=value`(可重复)以及新增的 `task.py set-meta` 子命令,暴露了 `task.json` 的 `meta` 字段。
 
+### PRD 人读合同
+
+新生成的中文 PRD 按顺序使用“目标”“需求”和“用户可见结果”；英文输出使用对应的 `Goal`、`Requirements` 和 `User-visible Outcomes`。技术设计、执行和源码证据分别进入 `design.md`、`implement.md` 与 `research/`；UI 任务在用户确认原型前保持规划状态。Mermaid 图以带明确标签的红色节点和连线标记关键链路。`pnpm check:prd-contract` 检查模板、Workflow、Skill、Marketplace 副本以及真实中英文任务生成的漂移。Bootstrap、Joiner 和 Migration 任务写入器同样使用该 PRD 合同，并将技术或执行细节移入配套产物。
+
 ## Bug Fixes
 
 ### Kimi research 持久化

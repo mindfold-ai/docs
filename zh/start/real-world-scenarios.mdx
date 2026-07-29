@@ -174,28 +174,22 @@ frontend states, tests, and rollout risks.
 
 ## Goal
 
-Workspace admins can invite teammates by email and manage pending invites.
+1. 工作区管理员可以通过电子邮件邀请队友并管理待处理邀请。
 
-## In scope
+## Requirements
 
-- Create invite
-- Resend invite
-- Revoke invite
-- Accept invite
-- Expiration handling
+- 创建邀请
+- 重发邀请
+- 撤销邀请
+- 接受邀请
+- 处理过期情况
 
-## Out of scope
+## User-visible Outcomes
 
-- Bulk CSV import
-- SSO provisioning
-- Role templates
-
-## Acceptance criteria
-
-- Non-admin users cannot create, resend, or revoke invites.
-- Expired invites show a recoverable error.
-- Invite acceptance is idempotent.
-- Tests cover permission checks and expired invite behavior.
+- [ ] 非管理员用户不能创建、重发或撤销邀请。
+- [ ] 过期邀请显示可恢复的错误。
+- [ ] 接受邀请是幂等的。
+- [ ] 测试覆盖权限检查和过期邀请行为。
 ```
 
 ### 3.4 Task 和 subtask 怎么拆
@@ -224,7 +218,7 @@ Trellis task，比如 bulk CSV import、SSO provisioning、role templates。
 
 ### 3.5 工作流
 
-1. **用户** 用自然语言描述要做的功能；后续在 planning 中回答澄清问题、确认 scope → **AI** 先分类请求并询问是否创建 Trellis task。用户同意后，AI 加载 `trellis-brainstorm`，先检查相关代码/文档，再通过 `task.py create` 建任务，并把澄清出来的 Goal、In scope、Out of scope、Acceptance criteria 写到 `prd.md`（Phase 1.1）。
+1. **用户** 用自然语言描述要做的功能；后续在 planning 中回答澄清问题、确认 scope → **AI** 先分类请求并询问是否创建 Trellis task。用户同意后，AI 加载 `trellis-brainstorm`，先检查相关代码/文档，再通过 `task.py create` 建任务，并把澄清出来的目标、用户需要的行为和可核验结果写到 `prd.md`；范围与证据分别放入配套产物（Phase 1.1）。
 2. **AI** 配置 `implement.jsonl` / `check.jsonl`，把任务相关的 spec 加进来（Phase 1.3）。
 3. **用户** 输入 `/trellis:continue` → **AI** dispatch `trellis-implement`，按 PRD 实现一个最小可跑通的端到端版本（Phase 2.1）。
 4. **用户** 输入 `/trellis:continue` → **AI** dispatch `trellis-check` 按 `check.jsonl` 检查 UI 输入、API 校验、数据库写入、邮件副作用、权限失败路径等跨层一致性，发现问题直接修（Phase 2.2）。
@@ -295,7 +289,7 @@ convention, propose a spec update.
 
 ### 5.3 工作流
 
-1. **用户** 用自然语言描述 bug 现象、已知复现路径、期望行为；后续在 planning 中跟 AI 一起 narrow down 根因假设 → **AI** 先分类请求并询问是否创建 Trellis task。用户同意后，AI 加载 `trellis-brainstorm`，先检查复现相关上下文，再通过 `task.py create` 建 bug fix 任务，并把复现步骤、根因假设、回归测试要求写到 `prd.md`（Phase 1.1）。
+1. **用户** 用自然语言描述 bug 现象、已知复现路径、期望行为；后续在 planning 中跟 AI 一起 narrow down 根因假设 → **AI** 先分类请求并询问是否创建 Trellis task。用户同意后，AI 加载 `trellis-brainstorm`，先检查复现相关上下文，再通过 `task.py create` 建 bug fix 任务，并把目标、用户可理解的修复行为和可核验结果写到 `prd.md`；复现步骤、根因假设和回归测试要求放入配套产物（Phase 1.1）。
 2. **AI** 配置 `check.jsonl` 引用相关 spec 和测试约定 → **用户** 确认 check 上下文够不够覆盖边界（Phase 1.3）。
 3. **用户** 输入 `/trellis:continue` → **AI** `trellis-implement` 用最小安全改动止住 bug，先加回归测试再清理（Phase 2.1）。
 4. **用户** 输入 `/trellis:continue`，自己 review patch 是否真修了报告里的行为 → **AI** `trellis-check` 跑测试，确认 patch 修复 + 没有 patch 时回归测试会失败（Phase 2.2）。
@@ -334,7 +328,7 @@ show the target spec file and a good/bad example.
 
 ### 6.3 工作流
 
-1. **用户** 用自然语言说明哪些 PR 反馈值得沉淀（粘贴 PR 链接或评论列表），后续在 planning 中跟 AI 一起按工程规则归类反馈 → **AI** 先分类请求并询问是否创建 Trellis task。用户同意后，AI 加载 `trellis-brainstorm`，先检查已提供的反馈，再通过 `task.py create` 建 spec 完善任务，并把目标 review pattern、覆盖范围、验收标准写到 `prd.md`（Phase 1.1）。
+1. **用户** 用自然语言说明哪些 PR 反馈值得沉淀（粘贴 PR 链接或评论列表），后续在 planning 中跟 AI 一起按工程规则归类反馈 → **AI** 先分类请求并询问是否创建 Trellis task。用户同意后，AI 加载 `trellis-brainstorm`，先检查已提供的反馈，再通过 `task.py create` 建 spec 完善任务，并把目标 review pattern、用户需要的行为和可核验结果写到 `prd.md`；范围与证据分别放入配套产物（Phase 1.1）。
 2. **用户** 从真实 PR 里收集重复反馈，按工程规则分组（同一 spec 文件聚到一起），把分组结果贴进 PRD。
 3. **用户** 输入 `/trellis:continue` → **AI** 触发 `trellis-update-spec` 把每条规则加进最相关的 spec 文件，每条配 good/bad 代码示例 → **用户** 人工 review 规则措辞是否准确。
 4. **AI**（在下一个开发任务 init context 时）把更新过的 spec 加进 `check.jsonl`，让 `trellis-check` 验证规则能不能抓到问题。
@@ -395,3 +389,10 @@ setup, success metrics, and risks. Keep the first rollout small enough to comple
     在一个仓库试点，再扩展到更多团队。
   </Card>
 </CardGroup>
+<!-- prd-contract:START -->
+
+## 规划示例边界
+
+将用户目标、所需行为和可见结果留在 PRD；将实现细节和仓库证据移入专属产物。
+
+<!-- prd-contract:END -->
