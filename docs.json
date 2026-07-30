@@ -123,6 +123,7 @@
                     "pages": [
                       "changelog/v0.7.0-beta.1",
                       "changelog/v0.7.0-beta.0",
+                      "changelog/v0.6.11",
                       "changelog/v0.6.10",
                       "changelog/v0.6.9",
                       "changelog/v0.6.8",
@@ -355,6 +356,7 @@
                     "pages": [
                       "changelog/v0.7.0-beta.1",
                       "changelog/v0.7.0-beta.0",
+                      "changelog/v0.6.11",
                       "changelog/v0.6.10",
                       "changelog/v0.6.9",
                       "changelog/v0.6.8",
@@ -593,6 +595,7 @@
                     "pages": [
                       "zh/changelog/v0.7.0-beta.1",
                       "zh/changelog/v0.7.0-beta.0",
+                      "zh/changelog/v0.6.11",
                       "zh/changelog/v0.6.10",
                       "zh/changelog/v0.6.9",
                       "zh/changelog/v0.6.8",
@@ -825,6 +828,7 @@
                     "pages": [
                       "zh/changelog/v0.7.0-beta.1",
                       "zh/changelog/v0.7.0-beta.0",
+                      "zh/changelog/v0.6.11",
                       "zh/changelog/v0.6.10",
                       "zh/changelog/v0.6.9",
                       "zh/changelog/v0.6.8",
