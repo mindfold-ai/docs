@@ -1,0 +1,226 @@
+---
+title: 'Multi-agent Collaboration with Channel'
+sidebarTitle: 'Channel'
+description: 'Coordinate Claude and Codex workers through durable chat or forum channels, with explicit context, routing, waits, interrupts, and cleanup.'
+---
+
+`trellis channel` is Trellis's local multi-agent collaboration runtime. It lets a main agent start Claude or Codex workers, give each worker explicit context, exchange messages through a durable event log, and inspect or redirect work while it is running.
+
+Use Channel when the work needs a conversation or an audit trail—not just one isolated sub-agent call.
+
+```text
+main agent
+    |
+    | create / send / wait / interrupt
+    v
+durable channel event log
+    |                     |
+    v                     v
+Claude worker         Codex worker
+```
+
+Channel state is stored under `~/.trellis/channels/`. The default scope is the current project; `--scope global` creates a cross-project channel.
+
+## When to use Channel
+
+| Need                             | Channel pattern                                                |
+| -------------------------------- | -------------------------------------------------------------- |
+| A second opinion                 | Run a one-shot worker with `channel run`.                      |
+| Multi-round design discussion    | Create, spawn, send, wait, then send follow-up pressure tests. |
+| Independent implementation/check | Spawn a worker with task files or a JSONL context manifest.    |
+| Parallel review                  | Spawn named workers and wait for all of them.                  |
+| Correct work already in flight   | Use `channel interrupt` without discarding the session.        |
+| Durable topics or issue feedback | Create a `--type forum` channel with threads.                  |
+
+Do not use Channel as long-term conversation memory. Use `trellis mem` for history search. A normal platform sub-agent call is also simpler when you only need one static result and do not need durable messages, progress inspection, or redirection.
+
+## Let the AI operate Channel
+
+`trellis init` and `trellis update` install the bundled `trellis-channel` skill on supported platforms. You can describe the collaboration outcome instead of assembling every command yourself:
+
+```text
+Use trellis-channel to ask a Codex reviewer to challenge this design.
+Give it the PRD and design only, run at least two pressure-test rounds,
+then summarize the blockers without changing code.
+```
+
+The skill chooses the matching Channel workflow and CLI commands. Use the CLI directly when scripting, inspecting events, or debugging a worker.
+
+## One-shot question
+
+`channel run` creates an ephemeral channel, starts one worker, sends the prompt, prints the final answer, and removes the channel on success:
+
+```bash
+trellis channel run \
+  --provider codex \
+  --message "Review this design boundary and name the top three risks." \
+  --timeout 10m
+```
+
+If the run fails or times out, Trellis keeps the channel so you can inspect its events and worker log.
+
+## Multi-round review
+
+The most useful Channel workflow is an iterative review. Give the worker only the files it needs, wait on Trellis-emitted events, then challenge the first answer instead of treating it as final.
+
+```bash
+TASK=.trellis/tasks/06-01-example-feature
+
+trellis channel create architecture-review \
+  --task "$TASK" \
+  --by main
+
+trellis channel spawn architecture-review \
+  --provider codex \
+  --as reviewer \
+  --cwd "$PWD" \
+  --file "$TASK/prd.md" \
+  --file "$TASK/design.md" \
+  --timeout 30m
+
+cat <<'EOF' | trellis channel send architecture-review \
+  --as main \
+  --to reviewer \
+  --stdin \
+  --delivery-mode requireRunningWorker
+Review the proposed design. Verify its assumptions against the repository,
+identify blocking risks, and cite the relevant files. Do not implement it.
+EOF
+
+trellis channel wait architecture-review \
+  --as main \
+  --from reviewer \
+  --kind turn_finished \
+  --timeout 15m
+
+trellis channel messages architecture-review \
+  --from reviewer \
+  --kind message \
+  --last 1 \
+  --raw
+```
+
+Continue with a focused second round:
+
+```bash
+cat <<'EOF' | trellis channel send architecture-review \
+  --as main \
+  --to reviewer \
+  --stdin
+Pressure-test the MVP boundary. Which deferred capability would force a
+redesign if omitted now, and which concerns can safely wait?
+EOF
+
+trellis channel wait architecture-review \
+  --as main \
+  --from reviewer \
+  --kind turn_finished \
+  --timeout 15m
+```
+
+A productive review usually covers the direction, MVP boundary, data contract, CLI or UX contract, failure handling, and an opposition round. One answer plus a confirmation is a review, not a brainstorm.
+
+## Context and routing
+
+Workers do not automatically receive every project file.
+
+- Use repeatable `spawn --file <path>` flags for a few explicit files.
+- Use repeatable `spawn --jsonl <path>` flags for Trellis context manifests.
+- Use `--as <name>` to give each worker a stable address.
+- Use `send --to <name>` to wake a worker. Spawned workers are explicit-only by default.
+- Use `--delivery-mode requireRunningWorker` when silently appending a message to a stopped worker would be an error.
+- Use `--stdin` or `--text-file` for long prompts so the shell does not reinterpret punctuation.
+
+`send` always writes a `message` event. It has no custom `--tag` or `--kind` flag. Wait for system events such as `turn_finished`, `done`, `error`, or `killed` instead of asking the model to emit a magic completion string.
+
+## Parallel reviewers
+
+Give workers distinct names, send each one a targeted brief, and use `wait --all`:
+
+```bash
+trellis channel create design-review --by main --ephemeral
+
+trellis channel spawn design-review --provider claude --as reviewer-claude --timeout 15m
+trellis channel spawn design-review --provider codex --as reviewer-codex --timeout 15m
+
+echo "Review correctness and identify release blockers." \
+  | trellis channel send design-review --as main --to reviewer-claude --stdin
+
+echo "Challenge the design assumptions and propose a smaller solution." \
+  | trellis channel send design-review --as main --to reviewer-codex --stdin
+
+trellis channel wait design-review \
+  --as main \
+  --from reviewer-claude,reviewer-codex \
+  --kind turn_finished \
+  --all \
+  --timeout 15m
+```
+
+`--all` requires every worker listed in `--from` to produce a matching event. A timeout exits with code `124` and reports which workers are still missing.
+
+## Redirect a worker
+
+Use a soft interrupt when the worker should abandon its current turn and follow replacement instructions while keeping its provider session:
+
+```bash
+echo "Stop the refactor. Reproduce the failing test first." \
+  | trellis channel interrupt implementation \
+      --as main \
+      --to implementer \
+      --stdin
+```
+
+Use `channel kill <channel> --as <worker>` only when the worker must stop immediately or does not honor the interrupt. Session identifiers and logs remain available for diagnosis and `spawn --resume`.
+
+## Forum channels
+
+A forum channel is a durable board of independent threads rather than a flat chat timeline:
+
+```bash
+trellis channel create release-feedback \
+  --type forum \
+  --description "Release feedback and follow-up decisions." \
+  --by main
+
+trellis channel post release-feedback opened \
+  --as main \
+  --thread documentation-gap \
+  --title "Document the collaboration runtime" \
+  --description "Track the missing user guide and its resolution." \
+  --text "The feature currently appears only in release notes."
+
+trellis channel forum release-feedback
+trellis channel thread release-feedback documentation-gap
+```
+
+Use `channel context add` for background that should remain visible whenever a channel or thread is read. Use `post ... status` and `post ... summary` to record the resolution. Forum history is event-sourced, so inspect it with `forum`, `thread`, and `messages --thread` instead of parsing `events.jsonl` directly.
+
+## Inspect and clean up
+
+```bash
+trellis channel list --all
+trellis channel messages architecture-review --raw --last 50
+trellis channel messages architecture-review --raw --kind progress --last 80
+trellis channel rm architecture-review
+```
+
+Pretty message output is an operator view and may shorten progress payloads. Use `--raw` when auditing streamed output or diagnosing a stalled tool call.
+
+Spawned workers have an idle cleanup TTL of `5m` and a default live-worker budget of `6`. Override them per spawn with `--idle-timeout` and `--max-live-workers`, or configure `channel.worker_guard` in `.trellis/config.yaml`.
+
+## Command map
+
+| Command                      | Purpose                                               |
+| ---------------------------- | ----------------------------------------------------- |
+| `channel create`             | Create a durable chat or forum channel.               |
+| `channel run`                | Run one ephemeral worker and print its answer.        |
+| `channel spawn`              | Start a Claude or Codex worker with explicit context. |
+| `channel send` / `wait`      | Route work and wait for matching events.              |
+| `channel messages`           | Inspect, filter, or follow the event stream.          |
+| `channel interrupt` / `kill` | Redirect a turn or stop a worker.                     |
+| `channel forum` / `thread`   | Read reduced forum state and one thread timeline.     |
+| `channel context` / `title`  | Manage durable context and presentation metadata.     |
+| `channel rm` / `prune`       | Remove one channel or preview and apply bulk cleanup. |
+
+Run `trellis channel <command> --help` for the complete flags supported by your installed CLI version.

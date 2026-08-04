@@ -1,0 +1,181 @@
+---
+title: '动态 Workflow 切换'
+description: '按任务、开发者或团队选择 workflow 变体，同时保留全局回退。'
+---
+
+Trellis 0.7 把全局 workflow 和 workflow 变体库分开。不同任务可以使用不同
+变体，项目仍然保留一个安全的全局回退。
+
+## 全局切换和按任务选择不是一回事
+
+`trellis workflow --template <workflow-id>` 会替换全局 `.trellis/workflow.md`。
+当整个项目都要切换到另一个 workflow 时使用它。
+
+动态选择把变体保存在 `.trellis/workflows/`，运行时为当前 active task 解析
+一个变体，不会覆盖全局 workflow。
+
+## 创建本地 workflow
+
+从内置 native workflow 创建一份完整、可编辑的 workflow：
+
+```bash
+trellis workflow create review-first
+```
+
+Trellis 会写入 `.trellis/workflows/review-first.md`，然后依次询问：
+
+1. 是否在 `.trellis/config.yaml` 中设置 `default_workflow: review-first`？
+2. 是否在 `.trellis/.developer` 中设置 `workflow=review-first`？
+
+两个问题默认都选否。无论怎样回答，workflow 文件都会创建。使用
+`--skip-defaults` 可以只创建文件、不显示默认值设置交互；非交互环境也会跳过
+这两个问题。
+
+命令复制完整的 native workflow，因此新文件一开始就包含必需的 phase 标题、
+workflow-state block 和平台 marker。它不会修改或删除全局
+`.trellis/workflow.md`。
+
+## 把 workflow 变体保存到项目库
+
+列出内置、marketplace 和已保存的 workflow：
+
+```bash
+trellis workflow --list
+```
+
+保存一个变体：
+
+```bash
+trellis workflow --save tdd
+trellis workflow --save channel-driven-subagent-dispatch
+```
+
+需要时可以指定另一个 marketplace source：
+
+```bash
+trellis workflow \
+  --marketplace owner/repository \
+  --save my-workflow
+```
+
+结果是用户管理的文件：
+
+```text
+.trellis/workflows/
+├── tdd.md
+├── channel-driven-subagent-dispatch.md
+└── my-workflow.md
+```
+
+`trellis update` 不会覆盖这个目录。确实要刷新已保存模板时，重新运行
+`trellis workflow --save <workflow-id> --force`。
+
+## 为任务指定 workflow
+
+创建任务时直接选择：
+
+```bash
+python3 ./.trellis/scripts/task.py create \
+  "Add checkout validation" \
+  --workflow tdd
+```
+
+修改 active task 的选择：
+
+```bash
+python3 ./.trellis/scripts/task.py workflow tdd
+```
+
+清除任务 pin，重新使用默认解析链：
+
+```bash
+python3 ./.trellis/scripts/task.py workflow --clear
+```
+
+选择结果保存在 `task.json`：
+
+```json
+{
+  "workflow": "tdd"
+}
+```
+
+只有 `.trellis/workflows/tdd.md` 存在时，任务 pin 才能命中。文件缺失或 id
+无效时会打印警告，然后继续查找下一层默认值。
+
+## 配置个人和团队默认值
+
+运行时按下面的优先级解析：
+
+| 优先级 | 来源                                              | 作用范围              | 是否提交 |
+| -----: | ------------------------------------------------- | --------------------- | :------: |
+|      1 | `task.json` 的 `workflow`                         | 当前任务              |    是    |
+|      2 | `.trellis/.developer` 的 `workflow=<workflow-id>` | 当前开发者和 checkout |    否    |
+|      3 | `.trellis/config.yaml` 的 `default_workflow`      | 团队                  |    是    |
+|      4 | `.trellis/workflow.md`                            | 项目全局回退          |    是    |
+
+设置团队默认值：
+
+```yaml
+# .trellis/config.yaml
+default_workflow: tdd
+```
+
+设置个人覆盖：
+
+```ini
+# .trellis/.developer
+name=alice
+workflow=native
+```
+
+个人文件被 gitignore，因此某个开发者可以偏好 `native`，而团队默认值仍然是
+`tdd`。显式的任务 pin 优先级仍然高于这两层。
+
+某一层未设置、id 无效或文件缺失时，解析会继续向下。如果所有可选层都未命中，
+行为与直接读取 `.trellis/workflow.md` 完全一致。
+
+## 运行时会改变什么
+
+解析出的 workflow 会提供全部运行时流程内容：
+
+- SessionStart 显示的 Phase Index
+- 每轮 `[workflow-state:*]` breadcrumb
+- `get_context.py --mode phase` 返回的 phase 和 step 细节
+- Codex inline / sub-agent dispatch 指引
+
+所有消费方复用同一个 resolver，因此修改任务 pin 后，下一次 workflow 查询就会
+生效，不需要为切换新增 hook。
+
+## 保持变体文件兼容
+
+Workflow 变体不仅是说明文字，也是运行时输入。请保留以下 parser marker：
+
+- `## Phase Index` section
+- `#### X.Y` step heading
+- `[workflow-state:STATUS]...[/workflow-state:STATUS]` block
+- 当前 workflow 使用的平台 routing marker
+
+`trellis workflow --save` 会在模板缺少标准 marker 时发出警告。警告不会阻止
+自定义 workflow，但缺少 marker 会让 SessionStart 上下文、breadcrumb 或
+phase 查询降级。
+
+Workflow id 必须匹配 `[A-Za-z0-9_-]+`，确保所有 id 都只能落在
+`.trellis/workflows/` 内，避免路径穿越。
+
+## 当前限制
+
+- 选择是显式的，Trellis 暂时不会根据任务类型自动推断 workflow。
+- Oh My Pi extension 仍然读取全局 `.trellis/workflow.md`；task、personal
+  和 team 选择目前还不适用于它。
+- OpenCode 的每轮 breadcrumb 支持动态选择，但 SessionStart 摘要仍读取全局
+  workflow。
+- Snow 的 SessionStart 和每轮消息上下文仍读取全局 workflow。
+- 保存的 marketplace workflow 是本地副本，不会自动更新；需要时用
+  `--force` 再保存一次。
+
+## 相关页面
+
+- [自定义 Workflow](/zh/beta/advanced/custom-workflow)
+- [动态 Spec 加载](/zh/beta/advanced/dynamic-spec-loading)
+- [日常使用](/zh/beta/start/everyday-use)

@@ -1,0 +1,48 @@
+---
+title: 'v0.7.0-beta.0'
+description: '2026-07-28'
+---
+
+首个 0.7 beta 新增按路径交付 spec，以及运行时 workflow 选择。
+
+## 功能增强
+
+### 动态 Spec 加载
+
+Spec 可以在 YAML frontmatter 中声明相对于仓库根目录的 `paths` glob。Agent
+接触文件时，Trellis 会匹配这些 glob，只交付真正约束该文件的 spec 内容。
+
+- Claude Code 通过 `Read|Edit|Write|MultiEdit` 的 `PostToolUse` 接收匹配的
+  spec。
+- Codex 通过原生 `apply_patch` 的 `PreToolUse` 接收匹配的 spec。第一次收到
+  完整 spec 的 patch 会被拒绝一次；模型读取规则并重试后即可执行。
+- 完整正文、窗口内静默、刷新 ticket、截断和
+  `SessionStart(source=clear|compact)` reset 共用同一个决策引擎。
+- `get_context.py --mode spec --file <path>` 在 pull mode 下提供同一套匹配。
+
+详见[动态 Spec 加载](/zh/beta/advanced/dynamic-spec-loading)。
+
+### 动态 Workflow 切换
+
+Workflow 变体现在可以共存在 `.trellis/workflows/`，无需替换全局
+`.trellis/workflow.md`。
+
+- `trellis workflow --save <workflow-id>` 把变体保存到项目 workflow 库。
+- `task.py create --workflow <workflow-id>` 和
+  `task.py workflow <workflow-id>` 为单个任务指定
+  变体。
+- 运行时优先级是：任务 pin → 个人 `.trellis/.developer` 覆盖 → 团队
+  `default_workflow` → 全局 workflow。
+- SessionStart 上下文、每轮 breadcrumb 和 phase 查询复用同一个 resolver。
+
+详见[动态 Workflow 切换](/zh/beta/advanced/dynamic-workflow-switching)。
+
+## 升级
+
+```bash
+npm install -g @mindfoldhq/trellis@beta
+trellis update
+```
+
+本版本不需要文件迁移。没有 `paths` frontmatter 的旧 spec，以及未配置 workflow
+选择的项目，行为与之前保持一致。

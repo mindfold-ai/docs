@@ -1,0 +1,53 @@
+---
+title: 'Roadmap'
+---
+
+## Shipped in v0.6
+
+### Cross-session memory feedstock (`trellis mem`)
+
+A local CLI that indexes the Claude Code and Codex conversation logs already on the machine and exposes them as structured retrieval. `trellis mem list`, `search`, `context`, `extract`, and `projects` cover discovery, keyword search, context-window drill-down, cleaned-dialogue dump, and per-project routing. `extract --phase brainstorm|implement|all` slices a session at `task.py create` / `task.py start` boundaries so the AI can recover the planning window of any prior task. Reusable retrieval and phase logic live in `@mindfoldhq/trellis-core/mem`; nothing is uploaded.
+
+### Session insight (delivered as a capability skill)
+
+Shipped as the bundled `trellis-session-insight` skill rather than a hard-coded workflow step. The skill teaches the AI when to reach for `trellis mem` (past-solution recall, decision retrieval, cross-session continuation, familiar-bug debugging, self-pattern spotting, finish-work retrospective) and what _not_ to do with the output: there is no fixed write-back file. What to do with what `mem` returns — quote inline, update a `prd.md` / `design.md`, append to task notes, internalize, or hand off to `trellis-update-spec` — is judged in the moment by the AI based on the live conversation.
+
+### Configurable hooks
+
+Hook behavior is driven by `.trellis/config.yaml`. Current knobs: `session_commit_message`, `max_journal_lines`, `session_auto_commit`, the `hooks.after_create` / `after_start` / `after_finish` / `after_archive` task-lifecycle commands, `channel.worker_guard.idle_timeout` and `max_live_workers`, and `codex.dispatch_mode: inline | sub-agent` (the inline / sub-agent dispatch toggle that controls whether the main Codex agent edits code directly or routes through `trellis-implement` / `trellis-check` sub-agents).
+
+### Auto runner — superseded
+
+Dropped from the roadmap. Both Claude Code (`/goal`) and Codex (autonomy mode) now ship platform-native multi-step autonomy. Adding a Trellis-side runner on top would conflict with the platform scheduler rather than complement it.
+
+---
+
+## Deferred
+
+### Spec → Wiki concept migration
+
+Inspired by [Karpathy's LLM Wiki pattern](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f). Expand the `spec` concept into a more general "project memory / knowledge base" layer with wikilinks, cross-references, and stale markers; spec narrows back to pure coding constraints, wiki takes over the broader project memory role.
+
+**Status: deferred for product reasons.** The 0.6 cycle prioritized memory feedstock (`trellis mem`) and the session-insight skill that consumes it, which already covers the most common retrieval need without forcing every team to migrate `spec/` into a new schema. Wiki remains on the roadmap but no longer blocks 0.6.
+
+---
+
+## v0.7
+
+### Team-level memory
+
+Cross-developer, cross-task memory retrieval beyond the per-developer journal that exists today. Aims to drop the "find context" cost on large legacy repos. Strongest repeat signal across user interviews. Shape depends on whether Wiki ships first (rich linked memory) or stays deferred (looser aggregation on top of `trellis mem`).
+
+### TDD template
+
+Optional test-first workflow template that turns `implement → check` into `test → implement → check`. Current `trellis-check` is post-hoc. The TDD switch ships through `trellis-meta` skill; default lightweight workflow stays unchanged.
+
+### Stronger brainstorm
+
+Have brainstorm do deeper code / history investigation before asking business questions, leaving questions for what truly can't be inferred from the code. Today brainstorm asks shallow questions too easily.
+
+### Chinese localization
+
+Chinese versions of CLI output, built-in skill / sub-agent prompts, and default templates. `.trellis/spec/` and `workflow.md` are already model-agnostic markdown — writing them in Chinese works fine. This work targets Trellis's own bundled English copy.
+
+---

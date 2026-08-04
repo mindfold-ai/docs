@@ -1,0 +1,43 @@
+---
+title: 'v0.6.11'
+description: '2026-07-30'
+---
+
+Patch release improving Pi and Codex sub-agent reliability, UTF-8 hook input, bounded polyrepo scans, and platform detection.
+
+## Bug Fixes
+
+### Pi sub-agent model and thinking
+
+`trellis_subagent` now uses the invoking Pi session model when neither the call nor agent frontmatter selects a model. Explicit overrides keep their existing precedence, and the `thinking` option now accepts and preserves `max` (#494, #499).
+
+### Codex channel failures and idle timeout
+
+The Codex channel adapter now emits a channel error when a turn fails without a final answer, surfaces non-retryable app-server errors, and deduplicates paired failure notifications. The supervisor idle timer continues after `done` or `error`, so completed workers that remain idle are terminated normally (#495, #496).
+
+### UTF-8 hook input
+
+Standalone Python hooks now decode host-provided JSON from `stdin` as UTF-8 independently of the process locale. This covers sub-agent context injection, shell session context, and the optional Claude statusline on GBK and other non-UTF-8 hosts (#498).
+
+### Bounded polyrepo Git scans
+
+Automatic child-repository discovery stops after eight repositories and directs larger workspaces to explicit `packages` configuration. Best-effort Git status probes now use a two-second timeout without changing normal Git commands (#497).
+
+### Trellis-owned platform detection
+
+`getConfiguredPlatforms()` now detects installations from Trellis-owned template hashes intersected with each platform collector and private config directory. Shared `.agents/skills` files no longer create false positives during `trellis init` (#501).
+
+## Internal
+
+### Python 3.9 CI gate
+
+CI now compiles every tracked `.py` file with Python 3.9, runs `basedpyright`, and triggers when Python files change. This enforces the documented minimum Python version before release (#502).
+
+## Upgrade
+
+```bash
+npm install -g @mindfoldhq/trellis@latest
+trellis update
+```
+
+No `--migrate` required.

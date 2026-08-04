@@ -1,0 +1,190 @@
+---
+title: 'Custom Workflow Format'
+description: 'Create a workflow variant and preserve the markdown contracts used by session, per-turn, phase, and sub-agent runtime paths.'
+---
+
+A workflow file is both documentation and runtime input. Trellis reads its
+headings and marker blocks to build session context, per-turn guidance, and
+step-level instructions.
+
+## Start from the generated scaffold
+
+Create a local workflow:
+
+```bash
+trellis workflow create review-first
+```
+
+This writes `.trellis/workflows/review-first.md` from the complete bundled
+native workflow. Starting from native is safer than writing an empty file
+because every parser-sensitive section is already present.
+
+The command then asks whether to make the workflow the project default and
+whether to make it your personal default. Use `--skip-defaults` when you only
+want the file.
+
+<Note>
+  The command never replaces or removes `.trellis/workflow.md`. That file remains the global
+  zero-configuration fallback.
+</Note>
+
+## Understand the file layout
+
+```text
+.trellis/
+├── workflow.md
+├── workflows/
+│   └── review-first.md
+├── config.yaml
+└── .developer
+```
+
+The runtime chooses a file in this order:
+
+1. Active task: `task.json` `workflow`
+2. Current developer: `.developer` `workflow=`
+3. Project: `config.yaml` `default_workflow`
+4. Global fallback: `.trellis/workflow.md`
+
+See [Dynamic Workflow Switching](/beta/advanced/dynamic-workflow-switching)
+for the selection commands and current platform limits.
+
+## Keep the runtime contract
+
+The generated scaffold is the authoritative example. A smaller workflow can
+work, but keep these structures:
+
+```markdown
+## Phase Index
+
+Phase 1: Plan
+Phase 2: Execute
+Phase 3: Finish
+
+[workflow-state:no_task]
+Explain what the agent should do when no task is active.
+[/workflow-state:no_task]
+
+[workflow-state:planning]
+Explain the planning requirements.
+[/workflow-state:planning]
+
+[workflow-state:planning-inline]
+Explain the Codex inline planning requirements.
+[/workflow-state:planning-inline]
+
+[workflow-state:in_progress]
+Explain the implementation, verification, and finish flow.
+[/workflow-state:in_progress]
+
+[workflow-state:in_progress-inline]
+Explain the Codex inline implementation flow.
+[/workflow-state:in_progress-inline]
+
+[workflow-state:completed]
+Explain the completed-task action.
+[/workflow-state:completed]
+
+## Phase 1: Plan
+
+#### 1.0 Create task
+
+Detailed instructions for this step.
+
+## Phase 2: Execute
+
+#### 2.1 Implement
+
+Detailed instructions for this step.
+
+## Phase 3: Finish
+
+#### 3.4 Commit changes
+
+Detailed instructions for this step.
+```
+
+The parser-sensitive parts are:
+
+| Structure                      | Consumer                             | Requirement                                           |
+| ------------------------------ | ------------------------------------ | ----------------------------------------------------- |
+| `## Phase Index`               | SessionStart                         | Exact heading; its content ends at `## Phase 1: Plan` |
+| `## Phase 1: Plan`             | SessionStart boundary                | Keep this exact heading                               |
+| `#### X.Y`                     | `get_context.py --mode phase --step` | Use numeric step ids such as `2.1`                    |
+| `[workflow-state:STATUS]` pair | Per-turn hook                        | Opening and closing status must match                 |
+| Platform marker pair           | Phase renderer                       | Opening and closing platform lists must match         |
+
+Standard workflow-state ids are `no_task`, `planning`, `planning-inline`,
+`in_progress`, `in_progress-inline`, and `completed`. Custom ids may use
+letters, digits, underscores, and hyphens, but they only become active when
+some task lifecycle path writes the matching `task.json.status`.
+
+## Route instructions by platform
+
+Platform blocks are optional. Use them when one step needs different
+instructions for different harnesses:
+
+```markdown
+[Claude Code, Cursor, OpenCode, codex-sub-agent]
+Dispatch the implementation agent with the active task context.
+[/Claude Code, Cursor, OpenCode, codex-sub-agent]
+
+[codex-inline, Kilo, Antigravity, Devin]
+Load the project specs and implement in the main session.
+[/codex-inline, Kilo, Antigravity, Devin]
+```
+
+Platform matching ignores case, spaces, hyphens, and underscores. Marker lines
+must contain only the bracketed platform list.
+
+## Know what hooks read
+
+Hooks are installed by `trellis init` and `trellis update`. Do not declare
+hook event names or script commands inside a workflow file.
+
+| Runtime path                  | What it reads from the selected workflow                |
+| ----------------------------- | ------------------------------------------------------- |
+| SessionStart                  | `## Phase Index` overview                               |
+| Per-turn workflow-state hook  | The block matching the current task status              |
+| `get_context.py --mode phase` | Phase index or one `#### X.Y` step                      |
+| Parent session dispatch       | Agent-routing instructions written in the selected step |
+
+The sub-agent hook is separate. It injects `implement.jsonl` or `check.jsonl`,
+then `prd.md`, `design.md` when present, and `implement.md` when present. It
+does not parse workflow markdown. The selected workflow tells the parent
+session when and how to dispatch; the sub-agent hook supplies the task-specific
+material.
+
+## Validate after editing
+
+Run the real phase parser:
+
+```bash
+python3 ./.trellis/scripts/get_context.py --mode phase
+python3 ./.trellis/scripts/get_context.py --mode phase --step 2.1
+python3 ./.trellis/scripts/get_context.py --mode phase --step 2.1 --platform claude
+python3 ./.trellis/scripts/get_context.py --mode phase --step 2.1 --platform codex
+```
+
+Use `python` instead of `python3` on Windows.
+
+`trellis workflow --save` warns when a marketplace template is missing the
+standard phase, step, or workflow-state markers. The warning does not block
+the save, so the parser commands above remain the final check for custom
+content.
+
+## Safe editing boundary
+
+You can freely change prose, add phases, change routing instructions, and add
+custom statuses. Preserve the parser syntax unless you also update every
+runtime consumer.
+
+Changes to workflow-state text appear on the next user turn. SessionStart
+overview changes appear in a new session. Step changes appear on the next
+`get_context.py --mode phase` lookup.
+
+## Related pages
+
+- [Dynamic Workflow Switching](/beta/advanced/dynamic-workflow-switching)
+- [Dynamic Spec Loading](/beta/advanced/dynamic-spec-loading)
+- [Everyday Use](/beta/start/everyday-use)

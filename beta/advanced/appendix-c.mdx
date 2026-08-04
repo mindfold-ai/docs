@@ -1,0 +1,56 @@
+---
+title: 'Appendix C: task.json Schema Reference'
+---
+
+## Appendix C: `task.json` Schema Reference
+
+Matches `task.py create` in `.trellis/scripts/common/task_store.py`:
+
+```json
+{
+  "id": "string", // Task ID (= slug, e.g., 02-27-user-login)
+  "name": "string", // Slug name (same as id in single-repo; monorepo may differ)
+  "title": "string", // Task title
+  "description": "string", // Description ("" if --description omitted)
+  "status": "string", // planning (default) | in_progress | completed; task.py list --status also accepts review
+  "dev_type": "string", // backend | frontend | fullstack | test | docs (null until set manually or by a custom hook; see note below)
+  "scope": "string", // Commit scope, e.g. "auth" (null until set-scope)
+  "package": "string", // Monorepo package name (null in single-repo)
+  "priority": "string", // P0 | P1 | P2 | P3 (default P2)
+  "creator": "string", // Creator developer id
+  "assignee": "string", // Assignee developer id
+  "createdAt": "string", // YYYY-MM-DD creation date
+  "completedAt": "string", // YYYY-MM-DD completion date (null if not done)
+  "branch": "string", // Feature branch name (null until set-branch)
+  "base_branch": "string", // PR target branch (captured from current branch at create time)
+  "worktree_path": "string", // Schema slot — written as null on create; no script fills it
+  "commit": "string", // Schema slot — written as null on create; no script fills it
+  "pr_url": "string", // Schema slot — written as null on create; no script fills it
+  "subtasks": [], // Intra-task todo checklist ({name, status} pairs) — unrelated to children
+  "children": [], // Child task directory names (parent → child link)
+  "parent": "string", // Parent task directory name (null if top-level)
+  "relatedFiles": [], // Related files list
+  "notes": "string", // Notes ("" by default)
+  "meta": {} // Arbitrary per-project metadata (e.g. Linear issue id)
+}
+```
+
+Field order above matches `.trellis/scripts/common/task_store.py` verbatim — `task.py` writes them in this order.
+
+<Note>
+  `worktree_path` / `commit` / `pr_url` are schema placeholders — written as null on create, and no
+  Trellis script updates them afterward. Store commit hashes / PR URLs under `meta: {}` as custom
+  keys, or write them back from an `after_archive` hook.
+</Note>
+
+Older tasks may be missing newer fields (e.g., pre-`package` tasks have no `"package"` key); `task.py` treats missing keys as null.
+
+### Parent-child vs `subtasks` — know the difference
+
+| Field      | Purpose                                                                                                       |
+| ---------- | ------------------------------------------------------------------------------------------------------------- |
+| `parent`   | Directory name of the parent task, or `null` if top-level. Set by `task.py create --parent` or `add-subtask`. |
+| `children` | Array of child task directory names. Maintained bidirectionally with the child's `parent`.                    |
+| `subtasks` | A **within-task** todo checklist of `{name, status}` items. Used by bootstrap; unrelated to child tasks.      |
+
+---

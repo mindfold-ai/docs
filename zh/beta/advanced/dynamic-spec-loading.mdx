@@ -1,0 +1,147 @@
+---
+title: '动态 Spec 加载'
+description: '当 Agent 读取或修改文件时，加载真正约束该文件的项目规则。'
+---
+
+Trellis 可以把 spec 绑定到代码路径，并在 Agent 接触文件时交付匹配的规则。
+这样既不用把全部 spec 塞进提示词，又能让规则出现在它所约束的修改附近。
+
+## 声明一个 spec 约束哪些路径
+
+在 spec 的 YAML frontmatter 中添加 `paths` 列表。路径相对于仓库根目录。
+
+```md
+---
+name: commands-workflow
+description: Workflow command and resolver contracts
+paths:
+  - packages/cli/src/commands/workflow.ts
+  - packages/cli/src/utils/workflow-resolver.ts
+  - packages/cli/test/commands/workflow*.test.ts
+---
+
+# Workflow command rules
+
+...
+```
+
+匹配器支持：
+
+- `*`：匹配单个路径段内的内容
+- `**`：跨路径段匹配
+- `?`：匹配一个字符
+- 末尾 `/`：表示该目录下的全部内容
+
+没有 `paths` frontmatter 的旧 spec 行为不变，也不会被自动加载。
+
+## Agent 会收到什么
+
+Trellis 会为每个匹配的 spec 选择以下交付方式之一：
+
+| 场景                          | 交付方式                                |
+| ----------------------------- | --------------------------------------- |
+| 当前 session 第一次匹配       | 注入经过预算限制的完整 spec 正文        |
+| spec 未变化，且仍在刷新窗口内 | 不重复输出                              |
+| spec 未变化，但已超过刷新窗口 | 注入包含 spec 路径和读取提示的短 ticket |
+| spec 内容发生变化             | 再次注入完整正文                        |
+| session 被 clear 或 compact   | 下一次匹配时再次注入完整正文            |
+
+刷新窗口是固定窗口。静默命中不会把窗口向后延长，因此持续编辑时仍会在稍后收到提醒。
+
+一个文件匹配多个 spec 时，较窄的路径规则优先于较宽的规则。如果单次事件预算
+放不下所有完整正文，剩余匹配会降级为 spec 路径索引，而不是静默消失。
+
+## 不同平台的行为
+
+| 平台        | 触发点                                                  | 行为                                                                                       |
+| ----------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Claude Code | `Read`、`Edit`、`Write`、`MultiEdit` 的 `PostToolUse`   | 文件操作后交付匹配上下文。Claude Code 本身要求写前先读，因此通常会在后续编辑前先加载规则。 |
+| Codex       | 原生 `apply_patch` 的 `PreToolUse`                      | 在 patch 执行前解析所有新增、修改、删除和移动文件的 header。                               |
+| OpenCode    | `write`、`edit`、`apply_patch` 的 `tool.execute.before` | 新规则首次命中时阻断一次，把 spec 作为模型可见的工具错误交付，然后放行模型重试。           |
+| 其他平台    | Pull mode                                               | 通过 `get_context.py` 主动查询匹配的 spec 路径。                                           |
+
+### 为什么 Codex 和 OpenCode 会把第一次修改拦下一次
+
+Codex 和 OpenCode 都不要求修改文件前必须先读文件。第一次修改匹配到 spec 时，
+Trellis 会返回完整规则，并阻断这一轮调用：
+
+```text
+发起修改
+  → Trellis 注入约束该文件的 spec
+  → 本轮修改被阻断
+  → 模型读取 spec 后重试
+  → 重试正常执行
+```
+
+只有刚刚交付了**完整** spec 才会拦截。短 ticket 不会阻断；未变化且仍在刷新窗口
+内的 spec 不会产生输出。Codex 使用原生 hook deny；OpenCode 的稳定 plugin API
+没有直接返回 `additionalContext` 的字段，因此上下文会放进工具错误里。这是一次
+上下文交付握手，不是策略拒绝。
+
+## 配置预算和刷新窗口
+
+默认值适配宿主的上下文限制，不配置也能工作：
+
+```yaml
+spec_injection:
+  enabled: true
+  max_spec_chars: 9400
+  max_total_chars: 9500
+  refresh_window_seconds: 2700
+  tools: [Read, Edit, Write, MultiEdit]
+```
+
+| 配置项                   | 含义                                                                                                                                                       |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `enabled`                | 设为 `false` 可关闭动态 spec 加载。                                                                                                                        |
+| `max_spec_chars`         | 单个 spec 的最大字符数。`0` 表示不限制。                                                                                                                   |
+| `max_total_chars`        | 单次 hook 事件的最大字符数。`0` 表示不限制。                                                                                                               |
+| `refresh_window_seconds` | 未变化 spec 经过多少秒后发送短 ticket。`0` 表示关闭按时间刷新。                                                                                            |
+| `tools`                  | 可以触发匹配的逻辑工具名。Codex 和 OpenCode 的 `apply_patch` 映射为 `Edit`；OpenCode 的 `write` / `edit` 映射为 `Write` / `Edit`。空列表表示禁用全部触发。 |
+
+正文被截断时会附带完整 spec 路径，Agent 可以继续读取源文件。
+
+## 手动检查匹配结果
+
+使用 pull mode 查看一个路径由哪些 spec 约束，不会加载正文：
+
+```bash
+# macOS 和 Linux
+python3 ./.trellis/scripts/get_context.py --mode spec \
+  --file packages/cli/src/commands/workflow.ts
+
+# Windows
+python ./.trellis/scripts/get_context.py --mode spec \
+  --file packages/cli/src/commands/workflow.ts
+```
+
+加上 `--json` 可获得结构化输出：
+
+```bash
+python3 ./.trellis/scripts/get_context.py --mode spec \
+  --file packages/cli/src/commands/workflow.ts \
+  --json
+```
+
+没有匹配也是合法结果，会返回空的匹配列表。
+
+## 状态、reset 与失败行为
+
+交付状态保存在仓库外的 `~/.trellis/spec-inject/`。父 Agent 和 sub-agent
+使用独立的交付历史。Claude Code 和 Codex 用
+`SessionStart(source=clear|compact)` 记录共享 reset 标记。OpenCode 会把
+`session.compacted` 映射为相同的 compact reset，因此被压缩掉的规则会在下一次
+匹配时重新交付。
+
+Hook 不会解析 Claude Code、Codex 或 OpenCode 的 transcript 内容。Transcript
+格式属于宿主内部实现，不是 Trellis 的契约。
+
+匹配和状态故障采用 fail-open：frontmatter 格式错误、路径缺失、状态不可读或
+不可写、hook 内部异常，都不能破坏宿主工具调用。唯一有意阻断的情况，是 Codex
+或 OpenCode 刚刚收到完整约束 spec、且交付状态已经成功记录时的第一次修改。
+
+## 相关页面
+
+- [动态 Workflow 切换](/zh/beta/advanced/dynamic-workflow-switching)
+- [自定义 Hooks](/zh/beta/advanced/custom-hooks)
+- [架构](/zh/beta/advanced/architecture)

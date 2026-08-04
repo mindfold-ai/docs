@@ -1,0 +1,46 @@
+---
+title: 'v0.7.0-beta.1'
+description: '2026-07-29'
+---
+
+This beta adds workflow scaffolding, Pi workflow selection, and OpenCode
+dynamic spec loading.
+
+## Enhancements
+
+### Workflow scaffolding
+
+`trellis workflow create <workflow-id>` creates a user-managed
+`.trellis/workflows/<workflow-id>.md` from the complete native workflow.
+Interactive runs can set the new workflow as the project default in
+`.trellis/config.yaml` and the personal default in `.trellis/.developer`.
+`--skip-defaults` creates only the file. The global `.trellis/workflow.md`
+remains unchanged.
+
+### Pi dynamic workflow selection
+
+The Pi extension now resolves the workflow used for per-turn breadcrumbs with
+the same precedence as other Trellis consumers:
+
+```text
+task workflow → personal .developer → team config.yaml → global workflow.md
+```
+
+Invalid or missing variants fall through to the next layer.
+
+### OpenCode dynamic spec loading
+
+OpenCode now matches governing specs before `write`, `edit`, and `apply_patch`.
+When a full spec is delivered, the plugin blocks the first mutation with a
+model-visible tool error; the model reads the rules and retries, while persisted
+delivery state makes the retry silent. `session.compacted` resets exposure.
+Ticket-only and failure responses remain fail-open.
+
+## Upgrade
+
+```bash
+npm install -g @mindfoldhq/trellis@beta
+trellis update
+```
+
+No file migration is required.

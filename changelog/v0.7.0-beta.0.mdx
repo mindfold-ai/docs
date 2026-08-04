@@ -1,0 +1,53 @@
+---
+title: 'v0.7.0-beta.0'
+description: '2026-07-28'
+---
+
+The first 0.7 beta adds path-scoped spec delivery and runtime workflow
+selection.
+
+## Enhancements
+
+### Dynamic spec loading
+
+Specs can declare repo-relative `paths` globs in YAML frontmatter. Trellis
+matches those globs when an agent touches a file and delivers only the
+governing spec content.
+
+- Claude Code receives matching specs through `PostToolUse` on
+  `Read|Edit|Write|MultiEdit`.
+- Codex receives matching specs through `PreToolUse` on native `apply_patch`.
+  A patch that first receives a full spec is denied once and succeeds after
+  the model reads the rules and retries.
+- Full bodies, silent in-window hits, refresh tickets, truncation, and
+  `SessionStart(source=clear|compact)` reset use one shared decision engine.
+- `get_context.py --mode spec --file <path>` exposes the same matching in pull
+  mode.
+
+See [Dynamic Spec Loading](/beta/advanced/dynamic-spec-loading).
+
+### Dynamic workflow switching
+
+Workflow variants now coexist under `.trellis/workflows/` and can be selected
+without replacing the global `.trellis/workflow.md`.
+
+- `trellis workflow --save <workflow-id>` populates the project workflow library.
+- `task.py create --workflow <workflow-id>` and
+  `task.py workflow <workflow-id>` pin a variant to
+  one task.
+- Runtime precedence is task pin → personal `.trellis/.developer` override →
+  team `default_workflow` → global workflow.
+- Session-start context, per-turn breadcrumbs, and phase lookup share the same
+  resolver.
+
+See [Dynamic Workflow Switching](/beta/advanced/dynamic-workflow-switching).
+
+## Upgrade
+
+```bash
+npm install -g @mindfoldhq/trellis@beta
+trellis update
+```
+
+No file migration is required. Existing specs without `paths` frontmatter and
+projects without workflow selection settings retain their previous behavior.

@@ -1,0 +1,198 @@
+---
+title: 'Custom Spec Template Marketplace'
+---
+
+## Custom Spec Template Marketplace
+
+A spec template marketplace is a Git-backed source that `trellis init --registry`
+can read when a team wants the same `.trellis/spec/` starting point across many
+repositories.
+
+Use it for reusable engineering conventions: framework layout, API patterns,
+testing rules, release rules, review checklists, and the examples that your
+agents should see before writing code. Do not use it as a remote task store or
+as a place for project-private runtime state.
+
+### Runtime model
+
+`trellis init --registry <source>` parses `<source>` as a GitHub, GitLab, or
+Bitbucket source, then probes for `index.json` inside that source path.
+
+| Mode             | Condition                                     | Behavior                                                                |
+| ---------------- | --------------------------------------------- | ----------------------------------------------------------------------- |
+| Marketplace mode | `<source>/index.json` exists and is valid     | Trellis lists `type: "spec"` templates and installs the selected `id`   |
+| Direct mode      | `<source>/index.json` returns not found       | Trellis downloads the source directory itself into `.trellis/spec/`     |
+| Error            | `index.json` exists but is invalid/unreadable | Trellis stops instead of guessing direct mode from a broken marketplace |
+
+Source format:
+
+```text
+provider:user/repo[/subdir][#ref]
+```
+
+Examples:
+
+```bash
+# Marketplace mode: source points at the directory that contains index.json
+trellis init --registry gh:myorg/my-spec-marketplace/marketplace
+
+# Install one template by id
+trellis init --registry gh:myorg/my-spec-marketplace/marketplace --template web-app
+
+# Direct mode: source points directly at one template directory
+trellis init --registry gh:myorg/my-spec-marketplace/marketplace/specs/web-app
+
+# Pin a branch or tag
+trellis init --registry gh:myorg/my-spec-marketplace/marketplace#v1
+```
+
+### Repository shape
+
+A common layout is:
+
+```text
+my-spec-marketplace/
+└── marketplace/
+    ├── index.json
+    └── specs/
+        ├── web-app/
+        │   ├── README.md
+        │   ├── frontend/
+        │   ├── backend/
+        │   ├── shared/
+        │   └── guides/
+        └── worker-service/
+            ├── README.md
+            ├── backend/
+            ├── shared/
+            └── guides/
+```
+
+The template directory should contain the files that should appear inside
+`.trellis/spec/`. Do not wrap them in an extra `spec/` folder unless you really
+want `.trellis/spec/spec/...` after install.
+
+The inner folder names are your convention. Trellis does not require
+`frontend/`, `backend/`, `shared/`, or `guides/`; those are common because agents
+can load focused specs more reliably when large rules are split by area.
+
+### index.json contract
+
+`index.json` lives at the registry source path. In the layout above, users point
+`--registry` at `gh:myorg/my-spec-marketplace/marketplace`, so Trellis reads:
+
+```text
+marketplace/index.json
+```
+
+Minimal marketplace index:
+
+```json
+{
+  "version": 1,
+  "templates": [
+    {
+      "id": "web-app",
+      "type": "spec",
+      "name": "Web App",
+      "description": "Next.js + oRPC + PostgreSQL conventions",
+      "path": "marketplace/specs/web-app",
+      "tags": ["nextjs", "orpc", "postgres"]
+    }
+  ]
+}
+```
+
+Field rules:
+
+| Field         | Required | Meaning                                                                |
+| ------------- | -------- | ---------------------------------------------------------------------- |
+| `version`     | Yes      | Marketplace index version. Use `1` today.                              |
+| `templates`   | Yes      | Array of template entries.                                             |
+| `id`          | Yes      | Stable CLI id used by `--template <id>`.                               |
+| `type`        | Yes      | Must be `"spec"` for spec templates. Other template types are ignored. |
+| `name`        | Yes      | Human label shown in the interactive picker.                           |
+| `description` | No       | Short explanation shown beside the template.                           |
+| `path`        | Yes      | Directory copied into `.trellis/spec/`, relative to repository root.   |
+| `tags`        | No       | Search and browsing hints for humans.                                  |
+
+The important detail is `path`: it is relative to the repository root, not
+relative to the `index.json` file.
+
+### Authoring workflow
+
+1. Start from an existing template or create a new directory under
+   `marketplace/specs/<id>/`.
+2. Put reusable rules in topical files. Keep package-specific examples real, but
+   remove project-only assumptions.
+3. Add or update local `index.md` files if the folder uses them as navigation for
+   agents.
+4. Add the template entry to `marketplace/index.json`.
+5. Test from a throwaway repository before publishing the template.
+
+Test commands:
+
+```bash
+# Interactive picker
+trellis init --registry gh:myorg/my-spec-marketplace/marketplace
+
+# Non-interactive install
+trellis init --registry gh:myorg/my-spec-marketplace/marketplace --template web-app
+
+# Existing project: only add missing spec files
+trellis init --registry gh:myorg/my-spec-marketplace/marketplace --template web-app --append
+```
+
+After install, the target project owns its `.trellis/spec/` files. The template
+is a starting point, not a live remote wiki. Teams should edit the installed
+specs so they match the actual repository.
+
+### What belongs in a spec template
+
+Good template content:
+
+- Directory and module conventions for the stack.
+- API, database, state, testing, and error-handling rules.
+- Examples copied from real projects after removing private names and secrets.
+- Review checklists that agents should apply before finishing work.
+- Short guides that explain cross-layer tradeoffs for the stack.
+
+Do not include:
+
+- Secrets, internal URLs, customer data, or private incident details.
+- `.trellis/tasks/`, `.trellis/workspace/`, or active task state.
+- Platform prompt files such as `.claude/`, `.codex/`, `.cursor/`, or
+  `.opencode/`. Those belong in Trellis platform customization, not spec
+  templates.
+- Product PRDs that only make sense for one repository.
+
+### Versioning and rollout
+
+Treat template ids as public API for your team. If you need a breaking rewrite,
+publish a new id such as `web-app-v2` or pin the old behavior to a Git ref:
+
+```bash
+trellis init --registry gh:myorg/my-spec-marketplace/marketplace#v1 --template web-app
+```
+
+For smaller edits, keep the same id and document the change in the template
+`README.md`. Existing projects do not automatically become correct just because
+the source template changed; review and merge spec updates intentionally.
+
+### Troubleshooting
+
+| Symptom                                      | Check                                                                                      |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Picker does not show your templates          | `index.json` must be at the registry source path and entries must use `type: "spec"`.      |
+| `--template web-app` says not found          | `--template` matches `id`, not `name` or folder name.                                      |
+| Direct mode runs instead of marketplace mode | Trellis did not find `<source>/index.json`. Point `--registry` at the marketplace folder.  |
+| Files land under `.trellis/spec/spec/`       | The template directory contains an extra outer `spec/` folder.                             |
+| Private registry fails                       | Use a source your local Git credentials can read, or set `GIGET_AUTH` for token-based use. |
+| Agents ignore installed rules                | Make specs specific, keep folder `index.md` files current, and reference real repo paths.  |
+
+### Relationship to the Resource Marketplace
+
+The Resource Marketplace pages are the public catalog. This Advanced page is the
+maintenance guide for creating your own registry. If you publish a generally
+useful template, add a docs page under the template catalog after the registry
+itself works.

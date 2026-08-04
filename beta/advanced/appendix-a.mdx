@@ -1,0 +1,89 @@
+---
+title: 'Appendix A: Key File Paths Quick Reference'
+---
+
+## Appendix A: Key File Paths Quick Reference
+
+<Note>
+  This appendix uses **Claude Code**'s directory layout as the example (`.claude/commands/`,
+  `.claude/agents/`, `.claude/skills/`, `.claude/hooks/`). See the "Other platforms" section below,
+  or chapter 13 for the full per-platform layout.
+</Note>
+
+### Core files
+
+| File                                            | Description                           | Read on                           |
+| ----------------------------------------------- | ------------------------------------- | --------------------------------- |
+| `.trellis/workflow.md`                          | Development workflow contract         | Every session start               |
+| `.trellis/config.yaml`                          | Packages, update.skip, task hooks     | Init and updates                  |
+| `.trellis/.version`                             | Current Trellis version               | Updates                           |
+| `.trellis/.template-hashes.json`                | Template file hashes                  | Updates                           |
+| `.trellis/.developer`                           | Developer identity                    | Every session                     |
+| `.trellis/.runtime/sessions/<session-key>.json` | Active task for one AI session/window | Continue, hooks, sub-agent launch |
+
+### Shipped commands (Claude Code)
+
+| File                                      | Invoked as             |
+| ----------------------------------------- | ---------------------- |
+| `.claude/commands/trellis/finish-work.md` | `/trellis:finish-work` |
+| `.claude/commands/trellis/continue.md`    | `/trellis:continue`    |
+
+On platforms where SessionStart is automatic, `start` is not installed as a user-facing command. Agent-less platforms still ship a manual start workflow.
+
+### Shipped sub-agents (Claude Code)
+
+| File                                  | Sub-agent           | Role                         |
+| ------------------------------------- | ------------------- | ---------------------------- |
+| `.claude/agents/trellis-implement.md` | `trellis-implement` | Writes code, no `git commit` |
+| `.claude/agents/trellis-check.md`     | `trellis-check`     | Verify + self-fix            |
+| `.claude/agents/trellis-research.md`  | `trellis-research`  | Read-only codebase search    |
+
+### Shipped skills (Claude Code)
+
+| File                                          | Skill                 | Triggers when…                           |
+| --------------------------------------------- | --------------------- | ---------------------------------------- |
+| `.claude/skills/trellis-brainstorm/SKILL.md`  | `trellis-brainstorm`  | User describes a feature / bug / request |
+| `.claude/skills/trellis-before-dev/SKILL.md`  | `trellis-before-dev`  | About to write code in an active task    |
+| `.claude/skills/trellis-check/SKILL.md`       | `trellis-check`       | Implementation finished                  |
+| `.claude/skills/trellis-update-spec/SKILL.md` | `trellis-update-spec` | Worth capturing a learning               |
+| `.claude/skills/trellis-break-loop/SKILL.md`  | `trellis-break-loop`  | A tricky bug was just resolved           |
+
+### Hook scripts (Claude Code)
+
+| File                                       | Trigger           | Function                  |
+| ------------------------------------------ | ----------------- | ------------------------- |
+| `.claude/hooks/session-start.py`           | SessionStart      | Auto-inject context       |
+| `.claude/hooks/inject-workflow-state.py`   | UserPromptSubmit  | Workflow-state breadcrumb |
+| `.claude/hooks/inject-subagent-context.py` | PreToolUse (Task) | Spec injection engine     |
+
+### Other platforms
+
+Each platform writes into its own directory (see chapter 13 for the full layout):
+
+- `.cursor/commands/`, `.cursor/skills/`, `.cursor/agents/`, `.cursor/hooks/`, `.cursor/hooks.json`, `.cursor/rules/trellis.mdc`
+- `.opencode/commands/trellis/`, `.opencode/agents/`, `.opencode/skills/`, `.opencode/plugins/`
+- `.codex/prompts/`, `.codex/skills/`, `.codex/agents/` (TOML), `.codex/hooks/`, `AGENTS.md`
+- `.kiro/steering/`, `.kiro/prompts/`, `.kiro/skills/`, `.kiro/agents/`
+- `.gemini/commands/trellis/` (TOML), `.gemini/skills/`, `.gemini/agents/`, `.gemini/hooks/`
+- `.qoder/commands/`, `.qoder/skills/`, `.qoder/agents/`, `.qoder/hooks/`
+- `.codebuddy/commands/trellis/`, `.codebuddy/skills/`, `.codebuddy/agents/`, `.codebuddy/hooks/`
+- `.factory/commands/trellis/`, `.factory/droids/`, `.factory/skills/`, `.factory/hooks/`
+- `.github/copilot-instructions.md`, `.github/prompts/`, `.github/skills/`, `.github/agents/`, `.github/copilot/hooks/`
+- `.pi/prompts/`, `.pi/skills/`, `.pi/agents/`, `.pi/extensions/trellis/`, `.pi/settings.json`
+- `.kilocode/workflows/`, `.kilocode/skills/`
+- `.agent/workflows/`, `.agent/skills/` (Antigravity)
+- `.devin/workflows/`, `.devin/skills/`
+- `.agents/skills/` (shared cross-platform layer, written by Codex configurator)
+
+### Scripts
+
+| Script                                 | Function                   |
+| -------------------------------------- | -------------------------- |
+| `.trellis/scripts/task.py`             | Task management            |
+| `.trellis/scripts/get_context.py`      | Session context            |
+| `.trellis/scripts/add_session.py`      | Record session             |
+| `.trellis/scripts/create_bootstrap.py` | First-time spec bootstrap  |
+| `.trellis/scripts/get_developer.py`    | Developer identity utility |
+| `.trellis/scripts/init_developer.py`   | Developer initialization   |
+
+---

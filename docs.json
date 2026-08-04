@@ -24,38 +24,40 @@
         "language": "en",
         "versions": [
           {
-            "version": "Release",
+            "version": "Beta",
             "groups": [
               {
                 "group": "Start Here",
                 "pages": [
-                  "index",
-                  "start/install-and-first-task",
-                  "start/how-it-works",
-                  "start/everyday-use",
-                  "start/real-world-scenarios"
+                  "beta/index",
+                  "beta/start/install-and-first-task",
+                  "beta/start/how-it-works",
+                  "beta/start/everyday-use",
+                  "beta/start/real-world-scenarios"
                 ]
               },
               {
                 "group": "Advanced",
                 "pages": [
-                  "advanced/architecture",
-                  "advanced/channel",
-                  "advanced/roadmap",
-                  "advanced/custom-workflow",
-                  "advanced/custom-commands",
-                  "advanced/custom-agents",
-                  "advanced/custom-hooks",
-                  "advanced/custom-skills",
-                  "advanced/custom-spec-template-marketplace",
-                  "advanced/configuration",
-                  "advanced/multi-platform",
-                  "advanced/appendix-a",
-                  "advanced/appendix-b",
-                  "advanced/appendix-c",
-                  "advanced/appendix-d",
-                  "advanced/appendix-f",
-                  "advanced/resources"
+                  "beta/advanced/architecture",
+                  "beta/advanced/dynamic-spec-loading",
+                  "beta/advanced/channel",
+                  "beta/advanced/roadmap",
+                  "beta/advanced/custom-workflow",
+                  "beta/advanced/dynamic-workflow-switching",
+                  "beta/advanced/custom-commands",
+                  "beta/advanced/custom-agents",
+                  "beta/advanced/custom-hooks",
+                  "beta/advanced/custom-skills",
+                  "beta/advanced/custom-spec-template-marketplace",
+                  "beta/advanced/configuration",
+                  "beta/advanced/multi-platform",
+                  "beta/advanced/appendix-a",
+                  "beta/advanced/appendix-b",
+                  "beta/advanced/appendix-c",
+                  "beta/advanced/appendix-d",
+                  "beta/advanced/appendix-f",
+                  "beta/advanced/resources"
                 ]
               },
               {
@@ -71,7 +73,7 @@
                     "pages": [
                       "skills-market/index",
                       "skills-market/trellis-meta",
-                      "skills-market/trellis-spec-bootstarp",
+                      "skills-market/trellis-spec-bootstrap",
                       "skills-market/frontend-fullchain-optimization",
                       "skills-market/mem-recall"
                     ]
@@ -119,6 +121,10 @@
                     "group": "Changelog",
                     "expanded": false,
                     "pages": [
+                      "changelog/v0.7.0-beta.1",
+                      "changelog/v0.7.0-beta.0",
+                      "changelog/v0.6.11",
+                      "changelog/v0.6.10",
                       "changelog/v0.6.9",
                       "changelog/v0.6.8",
                       "changelog/v0.6.7",
@@ -251,6 +257,238 @@
               }
             ],
             "default": true
+          },
+          {
+            "version": "Release",
+            "groups": [
+              {
+                "group": "Start Here",
+                "pages": [
+                  "index",
+                  "start/install-and-first-task",
+                  "start/how-it-works",
+                  "start/everyday-use",
+                  "start/real-world-scenarios"
+                ]
+              },
+              {
+                "group": "Advanced",
+                "pages": [
+                  "advanced/architecture",
+                  "advanced/channel",
+                  "advanced/roadmap",
+                  "advanced/custom-workflow",
+                  "advanced/custom-commands",
+                  "advanced/custom-agents",
+                  "advanced/custom-hooks",
+                  "advanced/custom-skills",
+                  "advanced/custom-spec-template-marketplace",
+                  "advanced/configuration",
+                  "advanced/multi-platform",
+                  "advanced/appendix-a",
+                  "advanced/appendix-b",
+                  "advanced/appendix-c",
+                  "advanced/appendix-d",
+                  "advanced/appendix-f",
+                  "advanced/resources"
+                ]
+              },
+              {
+                "group": "Use Cases",
+                "pages": ["use-cases/open-typeless"]
+              },
+              {
+                "group": "Resource Marketplace",
+                "pages": [
+                  {
+                    "group": "Skills",
+                    "expanded": false,
+                    "pages": [
+                      "skills-market/index",
+                      "skills-market/trellis-meta",
+                      "skills-market/trellis-spec-bootstrap",
+                      "skills-market/frontend-fullchain-optimization",
+                      "skills-market/mem-recall"
+                    ]
+                  },
+                  {
+                    "group": "Spec Templates",
+                    "expanded": false,
+                    "pages": [
+                      "templates/specs-index",
+                      "templates/specs-electron",
+                      "templates/specs-nextjs",
+                      "templates/specs-cf-workers"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "Community",
+                "pages": [
+                  {
+                    "group": "Showcase",
+                    "expanded": false,
+                    "pages": [
+                      "showcase/index",
+                      "showcase/terminal-demo",
+                      "showcase/open-typeless",
+                      "showcase/trellis-cursor"
+                    ]
+                  },
+                  {
+                    "group": "Contributing",
+                    "expanded": false,
+                    "pages": ["contribute/docs", "contribute/trellis"]
+                  },
+                  {
+                    "group": "Tech Blog",
+                    "expanded": false,
+                    "pages": [
+                      "blog/index",
+                      "blog/use-k8s-to-know-trellis",
+                      "blog/ai-collaborative-dev-system"
+                    ]
+                  },
+                  {
+                    "group": "Changelog",
+                    "expanded": false,
+                    "pages": [
+                      "changelog/v0.7.0-beta.1",
+                      "changelog/v0.7.0-beta.0",
+                      "changelog/v0.6.11",
+                      "changelog/v0.6.10",
+                      "changelog/v0.6.9",
+                      "changelog/v0.6.8",
+                      "changelog/v0.6.7",
+                      "changelog/v0.6.6",
+                      "changelog/v0.6.5",
+                      "changelog/v0.6.4",
+                      "changelog/v0.6.3",
+                      "changelog/v0.6.2",
+                      "changelog/v0.6.1",
+                      "changelog/v0.6.0",
+                      "changelog/v0.6.0-rc.0",
+                      "changelog/v0.6.0-beta.23",
+                      "changelog/v0.6.0-beta.22",
+                      "changelog/v0.5.19",
+                      "changelog/v0.6.0-beta.21",
+                      "changelog/v0.6.0-beta.20",
+                      "changelog/v0.5.18",
+                      "changelog/v0.6.0-beta.19",
+                      "changelog/v0.5.17",
+                      "changelog/v0.6.0-beta.18",
+                      "changelog/v0.5.16",
+                      "changelog/v0.6.0-beta.17",
+                      "changelog/v0.6.0-beta.16",
+                      "changelog/v0.6.0-beta.15",
+                      "changelog/v0.6.0-beta.14",
+                      "changelog/v0.6.0-beta.13",
+                      "changelog/v0.6.0-beta.12",
+                      "changelog/v0.5.15",
+                      "changelog/v0.6.0-beta.11",
+                      "changelog/v0.5.14",
+                      "changelog/v0.6.0-beta.10",
+                      "changelog/v0.6.0-beta.9",
+                      "changelog/v0.5.13",
+                      "changelog/v0.6.0-beta.8",
+                      "changelog/v0.6.0-beta.7",
+                      "changelog/v0.5.12",
+                      "changelog/v0.5.11",
+                      "changelog/v0.5.10",
+                      "changelog/v0.6.0-beta.6",
+                      "changelog/v0.6.0-beta.5",
+                      "changelog/v0.6.0-beta.4",
+                      "changelog/v0.6.0-beta.3",
+                      "changelog/v0.6.0-beta.2",
+                      "changelog/v0.6.0-beta.1",
+                      "changelog/v0.5.9",
+                      "changelog/v0.6.0-beta.0",
+                      "changelog/v0.5.8",
+                      "changelog/v0.5.7",
+                      "changelog/v0.5.6",
+                      "changelog/v0.5.5",
+                      "changelog/v0.5.4",
+                      "changelog/v0.5.3",
+                      "changelog/v0.5.2",
+                      "changelog/v0.5.1",
+                      "changelog/v0.5.0",
+                      "changelog/v0.5.0-rc.7",
+                      "changelog/v0.5.0-rc.6",
+                      "changelog/v0.5.0-rc.5",
+                      "changelog/v0.5.0-rc.4",
+                      "changelog/v0.5.0-rc.3",
+                      "changelog/v0.5.0-rc.2",
+                      "changelog/v0.5.0-rc.1",
+                      "changelog/v0.5.0-rc.0",
+                      "changelog/v0.5.0-beta.19",
+                      "changelog/v0.5.0-beta.18",
+                      "changelog/v0.5.0-beta.17",
+                      "changelog/v0.5.0-beta.16",
+                      "changelog/v0.5.0-beta.15",
+                      "changelog/v0.5.0-beta.14",
+                      "changelog/v0.5.0-beta.13",
+                      "changelog/v0.5.0-beta.12",
+                      "changelog/v0.5.0-beta.11",
+                      "changelog/v0.5.0-beta.10",
+                      "changelog/v0.5.0-beta.9",
+                      "changelog/v0.5.0-beta.8",
+                      "changelog/v0.5.0-beta.7",
+                      "changelog/v0.5.0-beta.6",
+                      "changelog/v0.5.0-beta.5",
+                      "changelog/v0.5.0-beta.4",
+                      "changelog/v0.5.0-beta.3",
+                      "changelog/v0.5.0-beta.2",
+                      "changelog/v0.5.0-beta.1",
+                      "changelog/v0.5.0-beta.0",
+                      "changelog/v0.4.0",
+                      "changelog/v0.4.0-rc.1",
+                      "changelog/v0.4.0-rc.0",
+                      "changelog/v0.4.0-beta.10",
+                      "changelog/v0.4.0-beta.9",
+                      "changelog/v0.4.0-beta.8",
+                      "changelog/v0.4.0-beta.7",
+                      "changelog/v0.4.0-beta.6",
+                      "changelog/v0.4.0-beta.5",
+                      "changelog/v0.4.0-beta.4",
+                      "changelog/v0.4.0-beta.3",
+                      "changelog/v0.4.0-beta.2",
+                      "changelog/v0.4.0-beta.1",
+                      "changelog/v0.3.10",
+                      "changelog/v0.3.9",
+                      "changelog/v0.3.8",
+                      "changelog/v0.3.7",
+                      "changelog/v0.3.6",
+                      "changelog/v0.3.5",
+                      "changelog/v0.3.4",
+                      "changelog/v0.3.3",
+                      "changelog/v0.3.2",
+                      "changelog/v0.3.1",
+                      "changelog/v0.3.0-rc.6",
+                      "changelog/v0.3.0-rc.5",
+                      "changelog/v0.3.0-rc.4",
+                      "changelog/v0.3.0-rc.3",
+                      "changelog/v0.3.0-rc.2",
+                      "changelog/v0.3.0-rc.1",
+                      "changelog/v0.3.0-rc.0",
+                      "changelog/v0.3.0-beta.16",
+                      "changelog/v0.3.0-beta.15",
+                      "changelog/v0.3.0-beta.14",
+                      "changelog/v0.3.0-beta.13",
+                      "changelog/v0.3.0-beta.12",
+                      "changelog/v0.3.0-beta.11",
+                      "changelog/v0.3.0-beta.10",
+                      "changelog/v0.3.0-beta.9",
+                      "changelog/v0.3.0-beta.8",
+                      "changelog/v0.3.0-beta.7",
+                      "changelog/v0.3.0-beta.0",
+                      "changelog/v0.2.0",
+                      "changelog/v0.1.9"
+                    ]
+                  }
+                ]
+              }
+            ]
           }
         ]
       },
@@ -258,38 +496,40 @@
         "language": "zh",
         "versions": [
           {
-            "version": "Release",
+            "version": "Beta",
             "groups": [
               {
                 "group": "开始使用",
                 "pages": [
-                  "zh/index",
-                  "zh/start/install-and-first-task",
-                  "zh/start/how-it-works",
-                  "zh/start/everyday-use",
-                  "zh/start/real-world-scenarios"
+                  "zh/beta/index",
+                  "zh/beta/start/install-and-first-task",
+                  "zh/beta/start/how-it-works",
+                  "zh/beta/start/everyday-use",
+                  "zh/beta/start/real-world-scenarios"
                 ]
               },
               {
                 "group": "进阶",
                 "pages": [
-                  "zh/advanced/architecture",
-                  "zh/advanced/channel",
-                  "zh/advanced/roadmap",
-                  "zh/advanced/custom-workflow",
-                  "zh/advanced/custom-commands",
-                  "zh/advanced/custom-agents",
-                  "zh/advanced/custom-hooks",
-                  "zh/advanced/custom-skills",
-                  "zh/advanced/custom-spec-template-marketplace",
-                  "zh/advanced/configuration",
-                  "zh/advanced/multi-platform",
-                  "zh/advanced/appendix-a",
-                  "zh/advanced/appendix-b",
-                  "zh/advanced/appendix-c",
-                  "zh/advanced/appendix-d",
-                  "zh/advanced/appendix-f",
-                  "zh/advanced/resources"
+                  "zh/beta/advanced/architecture",
+                  "zh/beta/advanced/dynamic-spec-loading",
+                  "zh/beta/advanced/channel",
+                  "zh/beta/advanced/roadmap",
+                  "zh/beta/advanced/custom-workflow",
+                  "zh/beta/advanced/dynamic-workflow-switching",
+                  "zh/beta/advanced/custom-commands",
+                  "zh/beta/advanced/custom-agents",
+                  "zh/beta/advanced/custom-hooks",
+                  "zh/beta/advanced/custom-skills",
+                  "zh/beta/advanced/custom-spec-template-marketplace",
+                  "zh/beta/advanced/configuration",
+                  "zh/beta/advanced/multi-platform",
+                  "zh/beta/advanced/appendix-a",
+                  "zh/beta/advanced/appendix-b",
+                  "zh/beta/advanced/appendix-c",
+                  "zh/beta/advanced/appendix-d",
+                  "zh/beta/advanced/appendix-f",
+                  "zh/beta/advanced/resources"
                 ]
               },
               {
@@ -305,7 +545,7 @@
                     "pages": [
                       "zh/skills-market/index",
                       "zh/skills-market/trellis-meta",
-                      "zh/skills-market/trellis-spec-bootstarp",
+                      "zh/skills-market/trellis-spec-bootstrap",
                       "zh/skills-market/frontend-fullchain-optimization",
                       "zh/skills-market/mem-recall"
                     ]
@@ -353,6 +593,10 @@
                     "group": "Changelog",
                     "expanded": false,
                     "pages": [
+                      "zh/changelog/v0.7.0-beta.1",
+                      "zh/changelog/v0.7.0-beta.0",
+                      "zh/changelog/v0.6.11",
+                      "zh/changelog/v0.6.10",
                       "zh/changelog/v0.6.9",
                       "zh/changelog/v0.6.8",
                       "zh/changelog/v0.6.7",
@@ -485,6 +729,238 @@
               }
             ],
             "default": true
+          },
+          {
+            "version": "Release",
+            "groups": [
+              {
+                "group": "开始使用",
+                "pages": [
+                  "zh/index",
+                  "zh/start/install-and-first-task",
+                  "zh/start/how-it-works",
+                  "zh/start/everyday-use",
+                  "zh/start/real-world-scenarios"
+                ]
+              },
+              {
+                "group": "进阶",
+                "pages": [
+                  "zh/advanced/architecture",
+                  "zh/advanced/channel",
+                  "zh/advanced/roadmap",
+                  "zh/advanced/custom-workflow",
+                  "zh/advanced/custom-commands",
+                  "zh/advanced/custom-agents",
+                  "zh/advanced/custom-hooks",
+                  "zh/advanced/custom-skills",
+                  "zh/advanced/custom-spec-template-marketplace",
+                  "zh/advanced/configuration",
+                  "zh/advanced/multi-platform",
+                  "zh/advanced/appendix-a",
+                  "zh/advanced/appendix-b",
+                  "zh/advanced/appendix-c",
+                  "zh/advanced/appendix-d",
+                  "zh/advanced/appendix-f",
+                  "zh/advanced/resources"
+                ]
+              },
+              {
+                "group": "Use Cases",
+                "pages": ["zh/use-cases/open-typeless"]
+              },
+              {
+                "group": "Resource Marketplace",
+                "pages": [
+                  {
+                    "group": "Skills",
+                    "expanded": false,
+                    "pages": [
+                      "zh/skills-market/index",
+                      "zh/skills-market/trellis-meta",
+                      "zh/skills-market/trellis-spec-bootstrap",
+                      "zh/skills-market/frontend-fullchain-optimization",
+                      "zh/skills-market/mem-recall"
+                    ]
+                  },
+                  {
+                    "group": "Spec Templates",
+                    "expanded": false,
+                    "pages": [
+                      "zh/templates/specs-index",
+                      "zh/templates/specs-electron",
+                      "zh/templates/specs-nextjs",
+                      "zh/templates/specs-cf-workers"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "社区",
+                "pages": [
+                  {
+                    "group": "项目展示",
+                    "expanded": false,
+                    "pages": [
+                      "zh/showcase/index",
+                      "zh/showcase/terminal-demo",
+                      "zh/showcase/open-typeless",
+                      "zh/showcase/trellis-cursor"
+                    ]
+                  },
+                  {
+                    "group": "贡献指南",
+                    "expanded": false,
+                    "pages": ["zh/contribute/docs", "zh/contribute/trellis"]
+                  },
+                  {
+                    "group": "Tech Blog",
+                    "expanded": false,
+                    "pages": [
+                      "zh/blog/index",
+                      "zh/blog/use-k8s-to-know-trellis",
+                      "zh/blog/ai-collaborative-dev-system"
+                    ]
+                  },
+                  {
+                    "group": "Changelog",
+                    "expanded": false,
+                    "pages": [
+                      "zh/changelog/v0.7.0-beta.1",
+                      "zh/changelog/v0.7.0-beta.0",
+                      "zh/changelog/v0.6.11",
+                      "zh/changelog/v0.6.10",
+                      "zh/changelog/v0.6.9",
+                      "zh/changelog/v0.6.8",
+                      "zh/changelog/v0.6.7",
+                      "zh/changelog/v0.6.6",
+                      "zh/changelog/v0.6.5",
+                      "zh/changelog/v0.6.4",
+                      "zh/changelog/v0.6.3",
+                      "zh/changelog/v0.6.2",
+                      "zh/changelog/v0.6.1",
+                      "zh/changelog/v0.6.0",
+                      "zh/changelog/v0.6.0-rc.0",
+                      "zh/changelog/v0.6.0-beta.23",
+                      "zh/changelog/v0.6.0-beta.22",
+                      "zh/changelog/v0.5.19",
+                      "zh/changelog/v0.6.0-beta.21",
+                      "zh/changelog/v0.6.0-beta.20",
+                      "zh/changelog/v0.5.18",
+                      "zh/changelog/v0.6.0-beta.19",
+                      "zh/changelog/v0.5.17",
+                      "zh/changelog/v0.6.0-beta.18",
+                      "zh/changelog/v0.5.16",
+                      "zh/changelog/v0.6.0-beta.17",
+                      "zh/changelog/v0.6.0-beta.16",
+                      "zh/changelog/v0.6.0-beta.15",
+                      "zh/changelog/v0.6.0-beta.14",
+                      "zh/changelog/v0.6.0-beta.13",
+                      "zh/changelog/v0.6.0-beta.12",
+                      "zh/changelog/v0.5.15",
+                      "zh/changelog/v0.6.0-beta.11",
+                      "zh/changelog/v0.5.14",
+                      "zh/changelog/v0.6.0-beta.10",
+                      "zh/changelog/v0.6.0-beta.9",
+                      "zh/changelog/v0.5.13",
+                      "zh/changelog/v0.6.0-beta.8",
+                      "zh/changelog/v0.6.0-beta.7",
+                      "zh/changelog/v0.5.12",
+                      "zh/changelog/v0.5.11",
+                      "zh/changelog/v0.5.10",
+                      "zh/changelog/v0.6.0-beta.6",
+                      "zh/changelog/v0.6.0-beta.5",
+                      "zh/changelog/v0.6.0-beta.4",
+                      "zh/changelog/v0.6.0-beta.3",
+                      "zh/changelog/v0.6.0-beta.2",
+                      "zh/changelog/v0.6.0-beta.1",
+                      "zh/changelog/v0.5.9",
+                      "zh/changelog/v0.6.0-beta.0",
+                      "zh/changelog/v0.5.8",
+                      "zh/changelog/v0.5.7",
+                      "zh/changelog/v0.5.6",
+                      "zh/changelog/v0.5.5",
+                      "zh/changelog/v0.5.4",
+                      "zh/changelog/v0.5.3",
+                      "zh/changelog/v0.5.2",
+                      "zh/changelog/v0.5.1",
+                      "zh/changelog/v0.5.0",
+                      "zh/changelog/v0.5.0-rc.7",
+                      "zh/changelog/v0.5.0-rc.6",
+                      "zh/changelog/v0.5.0-rc.5",
+                      "zh/changelog/v0.5.0-rc.4",
+                      "zh/changelog/v0.5.0-rc.3",
+                      "zh/changelog/v0.5.0-rc.2",
+                      "zh/changelog/v0.5.0-rc.1",
+                      "zh/changelog/v0.5.0-rc.0",
+                      "zh/changelog/v0.5.0-beta.19",
+                      "zh/changelog/v0.5.0-beta.18",
+                      "zh/changelog/v0.5.0-beta.17",
+                      "zh/changelog/v0.5.0-beta.16",
+                      "zh/changelog/v0.5.0-beta.15",
+                      "zh/changelog/v0.5.0-beta.14",
+                      "zh/changelog/v0.5.0-beta.13",
+                      "zh/changelog/v0.5.0-beta.12",
+                      "zh/changelog/v0.5.0-beta.11",
+                      "zh/changelog/v0.5.0-beta.10",
+                      "zh/changelog/v0.5.0-beta.9",
+                      "zh/changelog/v0.5.0-beta.8",
+                      "zh/changelog/v0.5.0-beta.7",
+                      "zh/changelog/v0.5.0-beta.6",
+                      "zh/changelog/v0.5.0-beta.5",
+                      "zh/changelog/v0.5.0-beta.4",
+                      "zh/changelog/v0.5.0-beta.3",
+                      "zh/changelog/v0.5.0-beta.2",
+                      "zh/changelog/v0.5.0-beta.1",
+                      "zh/changelog/v0.5.0-beta.0",
+                      "zh/changelog/v0.4.0",
+                      "zh/changelog/v0.4.0-rc.1",
+                      "zh/changelog/v0.4.0-rc.0",
+                      "zh/changelog/v0.4.0-beta.10",
+                      "zh/changelog/v0.4.0-beta.9",
+                      "zh/changelog/v0.4.0-beta.8",
+                      "zh/changelog/v0.4.0-beta.7",
+                      "zh/changelog/v0.4.0-beta.6",
+                      "zh/changelog/v0.4.0-beta.5",
+                      "zh/changelog/v0.4.0-beta.4",
+                      "zh/changelog/v0.4.0-beta.3",
+                      "zh/changelog/v0.4.0-beta.2",
+                      "zh/changelog/v0.4.0-beta.1",
+                      "zh/changelog/v0.3.10",
+                      "zh/changelog/v0.3.9",
+                      "zh/changelog/v0.3.8",
+                      "zh/changelog/v0.3.7",
+                      "zh/changelog/v0.3.6",
+                      "zh/changelog/v0.3.5",
+                      "zh/changelog/v0.3.4",
+                      "zh/changelog/v0.3.3",
+                      "zh/changelog/v0.3.2",
+                      "zh/changelog/v0.3.1",
+                      "zh/changelog/v0.3.0-rc.6",
+                      "zh/changelog/v0.3.0-rc.5",
+                      "zh/changelog/v0.3.0-rc.4",
+                      "zh/changelog/v0.3.0-rc.3",
+                      "zh/changelog/v0.3.0-rc.2",
+                      "zh/changelog/v0.3.0-rc.1",
+                      "zh/changelog/v0.3.0-rc.0",
+                      "zh/changelog/v0.3.0-beta.16",
+                      "zh/changelog/v0.3.0-beta.15",
+                      "zh/changelog/v0.3.0-beta.14",
+                      "zh/changelog/v0.3.0-beta.13",
+                      "zh/changelog/v0.3.0-beta.12",
+                      "zh/changelog/v0.3.0-beta.11",
+                      "zh/changelog/v0.3.0-beta.10",
+                      "zh/changelog/v0.3.0-beta.9",
+                      "zh/changelog/v0.3.0-beta.8",
+                      "zh/changelog/v0.3.0-beta.7",
+                      "zh/changelog/v0.3.0-beta.0",
+                      "zh/changelog/v0.2.0",
+                      "zh/changelog/v0.1.9"
+                    ]
+                  }
+                ]
+              }
+            ]
           }
         ]
       }
@@ -507,7 +983,7 @@
     "links": [
       {
         "label": "Changelog",
-        "href": "/changelog/v0.6.9"
+        "href": "/changelog/v0.7.0-beta.1"
       },
       {
         "label": "Tech Blog",
@@ -881,5 +1357,9 @@
       "source": "/zh/release/guide/resources",
       "destination": "/zh/release/advanced/resources"
     }
-  ]
+  ],
+  "banner": {
+    "content": "📦 Reading **Beta** docs (0.7 track). Check your install: `trellis --version`. Install latest beta: `npm install -g @mindfoldhq/trellis@beta`. Switch to **Release** in the version dropdown ↘",
+    "dismissible": true
+  }
 }

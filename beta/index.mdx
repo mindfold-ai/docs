@@ -1,0 +1,68 @@
+---
+title: 'Trellis'
+description: 'All-in-one AI framework & toolkit for 10+ AI coding platforms'
+---
+
+## What is Trellis?
+
+AI's capabilities grow like vines: full of vitality but spreading everywhere. Trellis is scaffolding for AI, guiding it along the path of your conventions.
+
+Supported platforms: Claude Code, Cursor, OpenCode, Codex, Kiro, Kilo, Gemini CLI, Antigravity, Devin, Qoder, CodeBuddy, GitHub Copilot, Droid, Pi Agent, plus any agent that reads the `.agents/skills/` standard (Amp, Cline, Deep Agents, Firebender, Kimi Code CLI, Warp, and more).
+
+### One-Line Summary
+
+**Trellis is training wheels for AI coding assistants.** It automatically injects your project specs into every AI session, so the AI writes code following your standards instead of improvising.
+
+> AI's capabilities grow like vines, full of vitality but spreading everywhere.
+> Trellis is scaffolding for AI, guiding it along the path of your conventions.
+
+### Comparison with Traditional Approaches
+
+| Dimension             | `.cursorrules`                    | `CLAUDE.md`                      | Skills                    | **Trellis**                                                                                   |
+| --------------------- | --------------------------------- | -------------------------------- | ------------------------- | --------------------------------------------------------------------------------------------- |
+| Spec injection method | Manually loaded each conversation | Auto-loaded but easily truncated | User-initiated            | **Auto-injection (hooks on capable platforms, prelude on others), precisely loaded per task** |
+| Spec granularity      | One large file                    | One large file                   | One per Skill             | **Modular files, composed per task**                                                          |
+| Cross-session memory  | None                              | None                             | None                      | **Workspace journal persistence**                                                             |
+| Workflow enforcement  | None                              | None                             | None                      | **Auto-trigger skills + check sub-agent verify loop**                                         |
+| Team sharing          | Single user                       | Single user                      | Shareable but no standard | **Git-versioned Spec library**                                                                |
+| Platform support      | Cursor only                       | Claude Code only                 | Per platform              | **14 configured platforms + shared skill ecosystem**                                          |
+
+### Core Concepts at a Glance
+
+| Concept       | Description                                                                                                       | Location                                 |
+| ------------- | ----------------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
+| **Spec**      | Your coding standards, written in Markdown. AI reads specs before writing code                                    | `.trellis/spec/`                         |
+| **Workspace** | Each developer's session logs, letting AI remember what was done last time                                        | `.trellis/workspace/`                    |
+| **Task**      | A work unit containing requirements docs and context configuration                                                | `.trellis/tasks/`                        |
+| **Skill**     | Auto-triggered workflow modules: brainstorm, before-dev, check, update-spec, break-loop                           | platform-specific skills dir             |
+| **Sub-agent** | Specialized AI sub-process: `trellis-research`, `trellis-implement`, `trellis-check`                              | platform-specific agents dir             |
+| **Command**   | Explicit session entries: `finish-work`, `continue`, and manual `start` where needed                              | platform-specific commands dir           |
+| **Hook**      | Auto-triggered scripts that inject context at session start, sub-agent launch, etc. (platforms with hook support) | `.claude/hooks/`, etc.                   |
+| **Journal**   | Session log files recording what was done in each development session                                             | `.trellis/workspace/{name}/journal-N.md` |
+
+---
+
+## Why Trellis?
+
+| Feature                       | Problem Solved                                                                              |
+| ----------------------------- | ------------------------------------------------------------------------------------------- |
+| **Auto-Injection**            | Required specs and workflows auto-inject into every conversation. Write once, apply forever |
+| **Auto-updated Spec Library** | Best practices live in auto-updated spec files. The more you use it, the better it gets     |
+| **Skill-first Workflow**      | Most operations are auto-trigger skills. AI picks the right one without manual commands     |
+| **Team Sync**                 | Share specs across your team. One person's best practice benefits everyone                  |
+| **Session Persistence**       | Work traces persist in your repo. AI remembers project context across sessions              |
+
+<CardGroup cols={2}>
+  <Card title="Quick Start" icon="rocket" href="/start/install-and-first-task">
+    Install Trellis and set up your first project in 5 minutes.
+  </Card>
+  <Card title="Architecture" icon="book" href="/advanced/architecture">
+    Understand specs, tasks, hooks, and workspaces.
+  </Card>
+  <Card title="Commands & Skills" icon="terminal" href="/start/everyday-use">
+    Reference for slash commands (`/start`, `/finish-work`) and auto-trigger skills.
+  </Card>
+  <Card title="Writing Specs" icon="file-lines" href="/start/everyday-use">
+    Turn blank templates into executable contracts with `trellis-update-spec`.
+  </Card>
+</CardGroup>

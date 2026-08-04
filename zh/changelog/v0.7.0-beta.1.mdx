@@ -1,0 +1,42 @@
+---
+title: 'v0.7.0-beta.1'
+description: '2026-07-29'
+---
+
+本 beta 新增 workflow 脚手架、Pi workflow 选择和 OpenCode 动态 Spec 加载。
+
+## 功能增强
+
+### Workflow 脚手架
+
+`trellis workflow create <workflow-id>` 会从完整的 native workflow 创建用户管理的
+`.trellis/workflows/<workflow-id>.md`。交互式运行可以把新 workflow 设置为
+`.trellis/config.yaml` 中的项目默认值，以及 `.trellis/.developer` 中的个人
+默认值。`--skip-defaults` 只创建文件。全局 `.trellis/workflow.md` 保持不变。
+
+### Pi 动态 Workflow 选择
+
+Pi extension 现在使用与其他 Trellis consumer 相同的优先级，为每轮 breadcrumb
+解析 workflow：
+
+```text
+任务 workflow → 个人 .developer → 团队 config.yaml → 全局 workflow.md
+```
+
+无效或缺失的变体会继续回退到下一层。
+
+### OpenCode 动态 Spec 加载
+
+OpenCode 现在会在 `write`、`edit` 和 `apply_patch` 之前匹配约束 Spec。交付完整
+Spec 时，plugin 会用模型可见的工具错误阻断第一次修改；模型读取规则并重试，
+已持久化的交付状态会让重试静默通过。`session.compacted` 会重置交付历史。
+仅 ticket 和故障响应仍采用 fail-open。
+
+## 升级
+
+```bash
+npm install -g @mindfoldhq/trellis@beta
+trellis update
+```
+
+本版本不需要文件迁移。

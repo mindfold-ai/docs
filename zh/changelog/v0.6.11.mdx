@@ -1,0 +1,43 @@
+---
+title: 'v0.6.11'
+description: '2026-07-30'
+---
+
+补丁版本：提高 Pi 和 Codex 子代理可靠性，修复 UTF-8 hook 输入，并限制 polyrepo 扫描和改进平台检测。
+
+## Bug Fixes
+
+### Pi 子代理模型和 thinking
+
+当调用参数和 agent frontmatter 都未指定模型时，`trellis_subagent` 现在使用发起调用的 Pi session 模型。显式覆盖仍保持原有优先级，`thinking` 选项现在也支持并保留 `max`（#494、#499）。
+
+### Codex channel 失败和 idle timeout
+
+当 turn 失败且没有最终答案时，Codex channel adapter 现在会发送 channel error，同时报告不可重试的 app-server 错误，并去重成对出现的失败通知。`done` 或 `error` 之后 supervisor idle timer 仍会继续，因此已完成但保持空闲的 worker 会正常终止（#495、#496）。
+
+### UTF-8 hook 输入
+
+独立 Python hook 现在始终以 UTF-8 解码 host 通过 `stdin` 提供的 JSON，不再依赖进程 locale。该修复覆盖子代理上下文注入、shell session 上下文和可选的 Claude statusline，适用于 GBK 等非 UTF-8 host（#498）。
+
+### 有界 polyrepo Git 扫描
+
+自动子仓库发现会在八个仓库后停止，并提示大型 workspace 使用显式 `packages` 配置。尽力执行的 Git status 探测现在使用两秒超时，不改变普通 Git 命令行为（#497）。
+
+### Trellis 所有的平台检测
+
+`getConfiguredPlatforms()` 现在根据 Trellis 所有的模板 hash，并结合各平台 collector 和私有配置目录检测安装状态。共享的 `.agents/skills` 文件不再导致 `trellis init` 误判平台已安装（#501）。
+
+## Internal
+
+### Python 3.9 CI 门禁
+
+CI 现在使用 Python 3.9 编译所有受跟踪的 `.py` 文件，运行 `basedpyright`，并在 Python 文件变化时触发。这会在发布前强制执行文档规定的最低 Python 版本（#502）。
+
+## Upgrade
+
+```bash
+npm install -g @mindfoldhq/trellis@latest
+trellis update
+```
+
+不需要 `--migrate`。

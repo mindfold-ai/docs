@@ -1,0 +1,89 @@
+---
+title: 'Appendix B: Command & Skill Cheat Sheet'
+---
+
+## Appendix B: Command & Skill Cheat Sheet
+
+Trellis ships only a small session-boundary command surface. Everything else is an auto-trigger skill or a sub-agent. This is intentional: commands are for explicit user boundaries; the rest of the workflow runs itself.
+
+### Slash Commands (per platform)
+
+`finish-work` and `continue` are the normal user-invoked commands. `start` is only user-facing on platforms that do not auto-inject session context.
+
+| Platform                                                | Start                                                                     | Finish                 | Continue             | Delivery form                          |
+| ------------------------------------------------------- | ------------------------------------------------------------------------- | ---------------------- | -------------------- | -------------------------------------- |
+| Claude Code / OpenCode / Gemini CLI / CodeBuddy / Droid | automatic SessionStart hook                                               | `/trellis:finish-work` | `/trellis:continue`  | Slash command                          |
+| Cursor / Pi Agent / Qoder                               | automatic SessionStart hook or extension                                  | `/trellis-finish-work` | `/trellis-continue`  | Native command / prompt                |
+| Kiro                                                    | `@trellis:start`                                                          | `@trellis:finish-work` | `@trellis:continue`  | Skill via `@` picker                   |
+| Kilo                                                    | `/start.md`                                                               | `/finish-work.md`      | `/continue.md`       | Workflow file (`.kilocode/workflows/`) |
+| Antigravity / Devin                                     | workflow picker → `start` / `finish-work` / `continue`                    |                        |                      | Workflow file                          |
+| GitHub Copilot                                          | Run Prompt → `trellis-start` / `trellis-finish-work` / `trellis-continue` |                        |                      | Prompt file (`.github/prompts/`)       |
+| Codex                                                   | automatic `AGENTS.md` prelude; optional UserPromptSubmit hook             | skill / prompt entry   | skill / prompt entry | Skills + hooks                         |
+
+### Auto-trigger Skills
+
+These are matched by the platform based on user intent: no explicit invocation required. Trigger them manually with your platform's skill invocation syntax if needed.
+
+| Skill                 | Triggers when…                                        | What it does                                        |
+| --------------------- | ----------------------------------------------------- | --------------------------------------------------- |
+| `trellis-brainstorm`  | User describes a feature / bug / ambiguous request    | Produces task + `prd.md`, spawns research as needed |
+| `trellis-before-dev`  | Task is in_progress and the AI is about to write code | Reads relevant spec files for the package           |
+| `trellis-check`       | Implementation phase finished                         | Diff review, lint / typecheck / test, self-fix loop |
+| `trellis-update-spec` | A learning / decision / gotcha is worth capturing     | Adds an entry to the right spec file                |
+| `trellis-break-loop`  | A tricky bug was just resolved                        | 5-dimension root-cause + prevention analysis        |
+
+### Sub-agents
+
+Spawned by the main session via the platform's sub-agent / Task primitive.
+
+| Sub-agent           | Role                  | Restriction            |
+| ------------------- | --------------------- | ---------------------- |
+| `trellis-research`  | Codebase / doc search | Read-only              |
+| `trellis-implement` | Coding                | No `git commit`        |
+| `trellis-check`     | Verify + self-fix     | Has its own retry loop |
+
+Available as real sub-agents on Claude Code, Cursor, OpenCode, Codex, Kiro, Gemini CLI, Qoder, CodeBuddy, Copilot, Droid, and Pi Agent. Kilo, Antigravity, and Devin run the same work inline in the main session. Context is hook/extension-injected on Claude Code, Cursor, OpenCode, CodeBuddy, Droid, and Pi Agent; the other sub-agent platforms use a pull-based prelude.
+
+### Global CLI Commands
+
+| Command           | Purpose                                              | Usage                                          |
+| ----------------- | ---------------------------------------------------- | ---------------------------------------------- |
+| `trellis upgrade` | Upgrade the globally installed Trellis CLI package   | `trellis upgrade [--tag <tag>]`                |
+| `trellis update`  | Sync the current project's Trellis files to this CLI | `trellis update [--dry-run] [--migrate] [...]` |
+
+### `task.py` Subcommands
+
+| Subcommand        | Purpose                                                                                           | Usage                                                              |
+| ----------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| `create`          | Create task (also seeds `implement.jsonl` / `check.jsonl` when a sub-agent platform is installed) | `task.py create "title" [--slug name] [-a assignee] [-p priority]` |
+| `add-context`     | Add context entry (primary way to populate jsonl after `create`)                                  | `task.py add-context "$DIR" <target> "<path>" "<reason>"`          |
+| `validate`        | Validate JSONL                                                                                    | `task.py validate "$DIR"`                                          |
+| `list-context`    | View all entries                                                                                  | `task.py list-context "$DIR"`                                      |
+| `start`           | Set as current task for this AI session/window                                                    | `task.py start "$DIR"`                                             |
+| `finish`          | Clear current task for this AI session/window                                                     | `task.py finish`                                                   |
+| `set-branch`      | Set branch name                                                                                   | `task.py set-branch "$DIR" "feature/xxx"`                          |
+| `set-base-branch` | Set PR target branch                                                                              | `task.py set-base-branch "$DIR" "main"`                            |
+| `set-scope`       | Set scope                                                                                         | `task.py set-scope "$DIR" "auth"`                                  |
+| `add-subtask`     | Link child to parent                                                                              | `task.py add-subtask <parent-dir> <child-dir>`                     |
+| `remove-subtask`  | Unlink child from parent                                                                          | `task.py remove-subtask <parent-dir> <child-dir>`                  |
+| `archive`         | Archive task                                                                                      | `task.py archive <name>`                                           |
+| `list`            | List active tasks                                                                                 | `task.py list [--mine] [--status <s>]`                             |
+| `list-archive`    | List archived tasks                                                                               | `task.py list-archive [YYYY-MM]`                                   |
+
+### Python Scripts
+
+```bash
+# Context
+./.trellis/scripts/get_context.py                 # Full context
+./.trellis/scripts/get_context.py --json          # JSON
+./.trellis/scripts/get_context.py --mode packages # Per-package spec layers (monorepo)
+./.trellis/scripts/get_context.py --mode record   # For /trellis:finish-work
+
+# Session
+./.trellis/scripts/add_session.py --title "..." --commit "..." --summary "..."
+
+# Spec bootstrap (first-time)
+./.trellis/scripts/create_bootstrap.py
+```
+
+---

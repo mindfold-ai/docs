@@ -1,0 +1,141 @@
+---
+title: 'Custom Skills'
+---
+
+## Custom Skills
+
+Skills are the primary extension point in Trellis. Most of the shipped workflow (brainstorm, before-dev, check, update-spec, break-loop) is delivered as auto-trigger skills. This chapter explains how to add your own.
+
+### Commands vs. sub-agents vs. skills
+
+|                    | Command                   | Sub-agent                       | Skill                                    |
+| ------------------ | ------------------------- | ------------------------------- | ---------------------------------------- |
+| **Purpose**        | Explicit user entry point | Isolated sub-process for a role | Reusable workflow module                 |
+| **Trigger**        | `/trellis:xxx`            | Spawned via Task tool           | Platform auto-matches on user intent     |
+| **Granularity**    | Session boundary          | Role-level                      | Capability or phase level                |
+| **Cross-platform** | One file per platform     | One file per platform           | One folder per platform (same structure) |
+
+Use a skill when the AI should trigger it automatically based on context; use a command when the user should decide; use a sub-agent when the work needs isolation with its own prompt and restrictions.
+
+### Skill file format
+
+A skill is a folder containing `SKILL.md`:
+
+```
+.claude/skills/my-skill/
+├── SKILL.md
+└── references/         # optional supporting files the skill can reference
+```
+
+`SKILL.md` uses YAML frontmatter that the platform matches against:
+
+```markdown
+---
+name: my-skill
+description: |
+  One-line description of when this skill should fire. Platforms match on this text to decide whether to auto-trigger.
+---
+
+# My Skill
+
+Instructions the AI follows when this skill is triggered.
+
+## Steps
+
+1. Read the relevant files.
+2. Apply the logic.
+3. Report the result in this format: ...
+```
+
+Skills ship on all 14 configured platforms — the location differs per platform:
+
+| Platform    | Location                                                                                              |
+| ----------- | ----------------------------------------------------------------------------------------------------- |
+| Claude Code | `.claude/skills/{name}/SKILL.md`                                                                      |
+| Cursor      | `.cursor/skills/{name}/SKILL.md`                                                                      |
+| OpenCode    | `.opencode/skills/{name}/SKILL.md`                                                                    |
+| Codex       | `.codex/skills/{name}/SKILL.md` (plus a copy into `.agents/skills/` for the cross-platform ecosystem) |
+| Kiro        | `.kiro/skills/{name}/SKILL.md`                                                                        |
+| Gemini CLI  | `.gemini/skills/{name}/SKILL.md`                                                                      |
+| Qoder       | `.qoder/skills/{name}/SKILL.md`                                                                       |
+| CodeBuddy   | `.codebuddy/skills/{name}/SKILL.md`                                                                   |
+| Copilot     | `.github/skills/{name}/SKILL.md`                                                                      |
+| Droid       | `.factory/skills/{name}/SKILL.md`                                                                     |
+| Pi Agent    | `.pi/skills/{name}/SKILL.md`                                                                          |
+| Kilo        | `.kilocode/skills/{name}/SKILL.md`                                                                    |
+| Antigravity | `.agent/skills/{name}/SKILL.md`                                                                       |
+| Devin       | `.devin/skills/{name}/SKILL.md`                                                                       |
+
+`.agents/skills/{name}/SKILL.md` (the [agentskills.io](https://agentskills.io) cross-platform shared layer) is written by the Codex configurator and is directly usable by Amp, Cline, Deep Agents, Firebender, Kimi Code CLI, Warp, and other agents that read the standard.
+
+### Writing a skill that triggers reliably
+
+The `description` field is what platforms match on. Write it as a description of the **condition that should cause this skill to fire**, not a description of the skill's name.
+
+Examples:
+
+```yaml
+# Good: describes the trigger
+description: |
+  Use when the user reports a bug that was just fixed and wants to understand the root cause and prevent recurrence. Runs a 5-dimension analysis.
+
+# Bad: describes the skill's identity
+description: |
+  The break-loop skill analyzes bugs.
+```
+
+The skill body should:
+
+1. State the trigger condition again, in the skill's own voice, so the AI can double-check that the match was correct.
+2. Tell the AI exactly which files to read before acting.
+3. Give a fixed output format so the result is consistent across invocations.
+
+### Example: an `api-doc` skill
+
+`.claude/skills/api-doc/SKILL.md`:
+
+````markdown
+---
+name: api-doc
+description: |
+  Use when the user has just added or modified backend API endpoints and wants the OpenAPI doc updated. Parses the diff, extracts endpoint signatures, and writes the doc.
+---
+
+# api-doc
+
+You auto-generate API documentation from the current diff.
+
+## Trigger check
+
+Before running, verify that the diff contains changes under `src/api/` or `src/routes/`. If not, ask the user to confirm before proceeding.
+
+## Steps
+
+1. Run `git diff --name-only HEAD` and list changed files.
+2. For each changed endpoint file, extract the route, HTTP method, request schema, and response schema.
+3. Update `docs/openapi.yaml` with the new or modified endpoints.
+4. Report which endpoints were added, modified, or removed.
+
+## Output format
+
+```
+Added endpoints:
+  POST /api/foo
+Modified endpoints:
+  PUT /api/bar (request body changed)
+Removed endpoints:
+  (none)
+```
+````
+
+### Sharing skills
+
+To distribute a skill across projects:
+
+1. Put the canonical `SKILL.md` under `packages/cli/src/templates/common/skills/{name}/SKILL.md` (if contributing upstream) or publish it as its own npm package.
+2. Add a configurator step per platform that copies or adapts the skill into that platform's layout.
+3. Version the skill alongside the Trellis release so migrations stay consistent.
+
+External skills: if you want to pull in a community skill, fetch the folder into the right platform directory and commit it. Trellis doesn't currently ship an automated installer for external skills.
+
+---

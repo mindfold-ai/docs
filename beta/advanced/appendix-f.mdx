@@ -1,0 +1,347 @@
+---
+title: 'Appendix F: FAQ'
+---
+
+## Appendix F: FAQ
+
+## Getting started & upgrading
+
+### Q1: I'm used to running `/trellis:start` at session boundaries — what now?
+
+For a new request, just describe the work in natural language. Use
+`/trellis:continue` when an active task already exists and you want the AI to
+advance to the next workflow step.
+
+The context the old `/trellis:start` injected explicitly — current developer
+identity, git branch and status, active task, list of active tasks,
+`workflow.md` phase index, spec index paths, recent journal summaries — is now
+delivered by each platform's startup path. Claude-style platforms use
+SessionStart hooks or extensions. Codex uses `AGENTS.md` plus the
+`UserPromptSubmit` breadcrumb; when no task is active, the breadcrumb can direct
+the AI to read `trellis-start` once.
+
+When you want to re-orient the AI mid-session or push it to the next workflow
+step, type `/trellis:continue`. It reads task state, artifact presence, and
+`workflow.md`, then decides what to do.
+
+On platforms without a SessionStart hook (Kilo, Antigravity, Devin), still run `/trellis:start` or the platform's start workflow at session start.
+
+### Q2: How do I migrate an existing project to Trellis?
+
+1. `npm install -g @mindfoldhq/trellis@beta`
+2. `trellis init -u your-name` in the project root (auto-creates a bootstrap task).
+3. Open a Trellis-enabled AI session, or run the platform's start workflow if it has no automatic session injection; the brainstorm skill helps fill initial specs.
+4. Manually supplement core specs based on your conventions.
+5. Add `.trellis/` and whichever `.{platform}/` directories you use to git and commit.
+6. Teammates pull, then run `trellis init -u their-name`.
+
+### Q3: What's the `scratch` option in `trellis init` template selection?
+
+`scratch` means "minimal template": when picked, `trellis init` writes a small set of empty / placeholder files (basic directory skeleton + `index.md` stubs) and lets the AI fill them in based on your actual code. Use it when no built-in template fits your stack, or when you want a clean slate for skills like `cc-codex-spec-bootstrap` to populate.
+
+### Q4: How do Windows users install Trellis?
+
+All Trellis scripts are Python, cross-platform:
+
+```bash
+# 1. Install Node.js 18+ and Python 3.9+
+# 2. Install Trellis
+npm install -g @mindfoldhq/trellis@beta
+# 3. Initialize
+cd your-project
+trellis init -u your-name
+```
+
+`trellis init` now writes `CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR=1` into `.claude/settings.json` automatically. That env var keeps the Bash tool's cwd stable so hook scripts resolve paths correctly on Windows — no manual setup required.
+
+### Q5: How do I update Trellis without losing my customizations?
+
+Upgrade the global CLI first:
+
+```bash
+trellis upgrade                              # CLI 0.6.0+
+npm install -g @mindfoldhq/trellis@beta      # CLI 0.5.x or older (no `upgrade` command yet)
+```
+
+Then sync the project files:
+
+```bash
+trellis update --dry-run   # preview
+trellis update             # apply
+```
+
+Trellis hashes every template file at install time. Files you've modified are detected on update: unmodified files are overwritten; modified files prompt you (overwrite / skip). Use `-f` to force overwrite or `-s` to skip globally.
+
+For major versions, add `--migrate` to apply rename / delete entries from the migration manifest. Without `--migrate`, a breaking manifest will exit with instructions rather than silently renaming files.
+
+### Q6: Upgrading from 0.4.x to 0.5.0 — what's the safe sequence?
+
+Always pass `--migrate` for major bumps. 0.5.0 has a hard gate: `trellis update` exits 1 with `MIGRATION REQUIRED` unless you pass it. Without the gate, old behavior silently skipped rename / delete migrations and left a half-migrated state.
+
+```bash
+trellis update --migrate --dry-run   # preview
+trellis update --migrate             # apply; modified files prompt before changes
+trellis update                       # verify: should say "Already up to date"
+```
+
+Every update creates a timestamped backup at `.trellis/.backup-*` first; locally edited files go through hash check and get a `Modified by you` prompt (skip / overwrite / abort).
+
+### Q7: `trellis update` shows `0.4.0 → 0.4.0` and nothing actually upgraded. What's wrong?
+
+Upgrade is two steps for two layers:
+
+```bash
+trellis upgrade                           # 1. upgrade the CLI itself (CLI 0.6.0+)
+trellis update --migrate                  # 2. sync the project to the CLI's current version
+```
+
+`trellis update` only brings the project up to the CLI's version. If the CLI is still 0.4.0, the project can only reach 0.4.0. Join the beta channel first, then run `trellis update --migrate`.
+
+If your CLI predates 0.6.0 the `trellis upgrade` command does not exist — do step 1 with `npm install -g @mindfoldhq/trellis@beta` instead, then `trellis upgrade` follows the beta channel for later bumps.
+
+## Core concepts
+
+### Q8: Where is session history stored?
+
+```
+.trellis/workspace/
+├── index.md              # Master index across all developers
+└── {your-name}/
+    ├── index.md          # Personal index
+    └── journal-N.md      # Session journal (new file every ~2000 lines)
+```
+
+### Q9: How detailed should specs be?
+
+Aim for 200-500 lines per file, 20-50 lines per section. Concrete code examples beat abstract rules. Update specs as soon as something is out of date.
+
+### Q10: What's the role of `index.md` in `.trellis/spec/`? Is it just a directory listing?
+
+Roughly yes — `index.md` per spec layer is a one-line catalogue of what specs exist plus a short reason for each. The brainstorm/research phase reads only the `index.md` (paths + reasons), then writes the relevant entries into `implement.jsonl` / `check.jsonl`. The actual spec body files (`error-handling.md`, etc.) are loaded only when the JSONL lists them. So `index.md` is the discovery surface — keep it short, one line per spec, and put the body in the spec file itself.
+
+### Q11: What's the difference between a command, a skill, and a sub-agent?
+
+| Primitive | Triggered by          | Typical use                                                                    |
+| --------- | --------------------- | ------------------------------------------------------------------------------ |
+| Command   | User (`/trellis:*`)   | Session boundaries (start, finish-work, continue)                              |
+| Skill     | Platform (auto-match) | Phase-level workflows (brainstorm, before-dev, check, update-spec, break-loop) |
+| Sub-agent | Main session (spawn)  | Isolated roles (implement, check, research)                                    |
+
+See chapters 9–12 for guidance on picking the right primitive.
+
+### Q12: What's the difference between `/trellis:start` and `/trellis:continue`?
+
+`/trellis:start` is for fresh sessions on a platform without automatic startup
+context (Kilo / Antigravity / Devin). It loads Trellis orientation
+explicitly. On platforms with a startup hook, extension, `AGENTS.md`, or
+prompt-hook bootstrap, you usually don't need it.
+
+`/trellis:continue` is for advancing the active task to the next workflow step.
+Use it at any phase boundary, or when you don't know what to do next — the AI
+reads task state, artifact presence, and `workflow.md`, then picks the next step.
+
+Mental model: `start` opens a window onto the project; `continue` moves the cursor forward inside that window.
+
+### Q13: What changed from 0.4 → 0.5?
+
+The headline changes:
+
+- **Skill-first**: `brainstorm` / `before-dev` / `check` / `update-spec` / `break-loop` moved from slash commands to auto-trigger skills that the platform matches based on user intent.
+- **`workflow.md` holds the workflow rules**: Phase definitions, skill routing, and per-turn workflow-state reminders all live in `.trellis/workflow.md`. Fork the workflow by editing one markdown file — no Python or hook changes needed (see chapter 8).
+- **Per-turn workflow-state breadcrumbs**: a new `inject-workflow-state.py` hook fires on every user message and injects a `<workflow-state>` block driven by the current task's status, keeping the AI aligned with the Plan → Execute → Finish phases.
+- **Three sub-agents replaced six**: `trellis-research` / `trellis-implement` / `trellis-check`. `dispatch` / `plan` / `debug` were removed; Ralph Loop and its SubagentStop hook were removed (the check sub-agent owns its retry loop now).
+- **Eight platforms upgraded to agent-capable**: Cursor / OpenCode / Gemini CLI / Qoder / CodeBuddy / Copilot / Droid / Pi Agent all got sub-agents and hooks or extension-backed equivalents; `.trellis/` core is unchanged across 14 platforms.
+- **Multi-Agent Pipeline, `/parallel`, `worktree.yaml` removed**: native worktree support in modern agent CLIs replaces them.
+- **Forced migration gate**: breaking releases require `trellis update --migrate` and exit with instructions instead of silently leaving half-migrated files.
+
+For the full list, read the 0.5.0 breaking-change changelog.
+
+### Q14: `/trellis:record-session` is gone. What replaces it?
+
+Absorbed into `/trellis:finish-work` in 0.5.0 — same journal-writing behavior, plus task archive and quality-gate reminders. Update aliases or external scripts that referenced `record-session`. Other commands removed in 0.5.0 with similar replacements: `/parallel` (use platform-native worktree), `/onboard` / `/create-command` / `/integrate-skill` (low usage; replaced by skill routing or `cc-codex-spec-bootstrap`), `/check-cross-layer` (merged into `check`).
+
+### Q15: Aren't sub-agents expensive in tokens? Is this architecture more wasteful?
+
+Sub-agents are tools the main agent calls: each invocation is an isolated subtask that runs and returns its conclusion. Because the main agent's context window stays clean, the overall session uses LESS token, not more, compared to "main agent does everything end-to-end and its context grows monotonically." The trade-off is that each sub-agent has its own small context for implementation or review, but the clarity from isolation outweighs that overhead.
+
+For very short sessions (small fixes), the isolation benefit is small — let the main agent handle it directly without dispatch.
+
+## Platforms & multi-tool
+
+### Q16: Can Cursor users get the same automation as Claude Code?
+
+Yes. Cursor now ships Trellis hooks, skills, and sub-agents. SessionStart injects the workflow at conversation start, `UserPromptSubmit` adds workflow-state breadcrumbs, and sub-agent context injection passes the right JSONL content into `trellis-implement` / `trellis-check` before they run.
+
+### Q17: Do I need to reconfigure when I switch between AI coding tools?
+
+No. `trellis init` with multiple platform flags writes all of them. If you started with Cursor only and later add Claude Code and Pi Agent, re-run:
+
+```bash
+trellis init -u your-name --claude --pi
+```
+
+The `.trellis/` directory (spec, workspace, tasks) is shared across all tools; only the `.{platform}/` directory is new.
+
+If you don't want to type flags, just run `trellis init` to enter the interactive picker — it offers to add a new platform, add a new developer, or reinitialize everything.
+
+## Usage & workflow
+
+### Q18: On a huge legacy repo, won't injecting specs blow up the context window?
+
+No, because Trellis doesn't inject all specs every turn. Each spec covers one topic (`error-handling.md`, `database.md`, `testing.md`) so files stay small. During brainstorm / research, the AI picks only the specs relevant to the current task and writes their paths into `implement.jsonl` / `check.jsonl`; the hook injects only those when dispatching `trellis-implement` / `trellis-check`. The main session reads spec **index** pages (paths only). A 500K-line repo with 50 spec files but 4 loaded per task behaves like a 4-file repo to the AI. If specs still bloat context, the spec files themselves are too long — split them.
+
+### Q19: I finished a task but the result is wrong / I want to add scope. What now?
+
+Tell the AI in plain language: `task X doesn't meet the requirement, redo it` or `extend X to also cover Y`. You don't need to recreate the task unless the scope shift is huge. If it is, run `task.py create` to start a new one and reference the old `prd.md` as background. Don't repair a task by editing files manually mid-flight — let the AI re-read the PRD and produce a new diff under the same task.
+
+### Q20: When I run multiple tasks in parallel, can their files contaminate each other?
+
+Each task has its own directory under `.trellis/tasks/<MM-DD-slug>/` with its own `prd.md`, `research/`, `implement.jsonl`, `check.jsonl`. Sub-agents only read the JSONL listed for the active task, so cross-task spec injection is scoped automatically. Per-developer journals live under `.trellis/workspace/<name>/`, also isolated.
+
+What's NOT isolated: dead-end exploration notes left inside one task's `research/` will mislead a future re-read of that same task. Recommended habit: when a research file turns out to be wrong, mark it `## DEPRECATED` at the top instead of leaving it ambiguous.
+
+### Q21: Do I have to commit code before running `/trellis:finish-work` to archive / record?
+
+`/trellis:finish-work` writes a session journal that includes the commit hash, so commit comes first. If you only want to archive a task without recording a journal, run `task.py archive <task-name>` directly — no commit required.
+
+Recommended sequence: Phase 3.4 commit → `/trellis:finish-work` (archives + writes journal).
+
+### Q22: Each task creates three commits (work + archive + journal). Isn't that redundant?
+
+The three commits come from different layers: your own work commit (Phase 3.4); `task.py archive` writes a `chore(task): archive ...` commit; `add_session.py` writes a `chore: record journal` commit. Squash on merge is the recommended way to collapse them into one PR commit. If you'd rather keep them as separate history entries, the work commit is the meaningful one — archive and journal are housekeeping and trivial to filter via `git log --invert-grep -E '^chore'`.
+
+### Q23: AI sometimes skips the Trellis flow and just writes code. How do I pull it back?
+
+Two pressure points:
+
+1. **Re-state the rule explicitly.** `Stop. We use Trellis. Classify the request and ask for task-creation consent before entering planning.` AI calibrates to the boundary you actually enforce, not the one you wished for.
+2. **Strengthen the workflow-state hook.** `inject-workflow-state.py` injects a per-turn breadcrumb based on current task status. If your team sees frequent skipping, fork `workflow.md` to add stricter `[workflow-state:no_task]` text that refuses Execute without an approved PRD.
+
+This is a known cross-model failure — Claude, GPT, DeepSeek all do it. The framework reduces it but doesn't eliminate it. Phase boundaries still need a human in the loop.
+
+### Q24: How do I use Trellis on a monorepo (frontend + backend in the same repo)?
+
+`trellis init` detects monorepo and creates per-package spec directories. By default, init writes one `frontend/` and one `backend/` spec block. For more granular packages, organize specs as `.trellis/spec/<package>/backend/` etc. and reference them from the parent `index.md`. The brainstorm/research phase picks the relevant package's specs into `implement.jsonl` based on the paths the task touches.
+
+Reverse case: pure-frontend or pure-backend single-repo projects — `trellis init` detects via language signals (`go.mod` / `package.json` / `*.csproj` / etc.) and only creates the matching directory; it won't force-create both.
+
+### Q25: How do I share knowledge between separate tasks (task A's lessons flowing into task B)?
+
+Three layers:
+
+- **Spec** — when task A teaches you something durable about the codebase or conventions, run `/trellis:update-spec` to write it into `.trellis/spec/`. Future tasks pick it up automatically when their `implement.jsonl` lists it.
+- **Workspace journal** — `.trellis/workspace/<name>/journal-*.md` carries session-level context across tasks for the same developer. SessionStart surfaces recent journals to the AI.
+- **Task PRD reference** — task B's `prd.md` can explicitly link to task A's `prd.md` or `research/` files; the brainstorm phase pulls them as context.
+
+What does NOT flow automatically: research notes inside `task-A/research/` are NOT auto-injected into task B. Durable findings → lift to spec. Task-specific findings → leave them in the source task, reference explicitly.
+
+### Q26: Is there TDD support?
+
+Not as a built-in workflow yet. The current default is implement → check (post-hoc), not test-first. A TDD skill template is on the roadmap for a future 0.5.x release. In the meantime, write TDD instructions into your project's `.trellis/spec/<package>/testing.md` so the implement / check sub-agents follow the right test patterns.
+
+### Q27: Can Trellis be used for non-code work — writing, legal docs, research?
+
+Yes. Several users have moved Trellis to long-form writing by treating prose like code: `prd.md` defines what the piece argues and what's out of scope; `.trellis/spec/` holds voice / structure / citation rules; `implement.jsonl` lists writing-agent context; `check.jsonl` lists editorial and fact-check rules; `journal-*.md` records decisions. Reported gains: 20-30% faster output for the same quality bar, mostly from removing the "remind the AI of the style guide" tax per session. Trellis won't help with creative spark — it helps with consistency and not re-explaining yourself.
+
+### Q28: How do I disable auto-commit when `.trellis/` is in `.gitignore`?
+
+When `.gitignore` excludes `.trellis/`, scripts respect it — they print a warning and skip `git add` / `git commit`. The journal and task-archive files still write to disk; they just don't enter git.
+
+To turn auto-commit off explicitly (regardless of `.gitignore`), set in `.trellis/config.yaml`:
+
+```yaml
+session_auto_commit: false
+```
+
+Default `true`. Accepts `true / false / yes / no / 1 / 0 / on / off`. Affects `add_session.py` (journal) and `task.py archive` (task archival).
+
+## Team collaboration & cross-project
+
+### Q29: Will multiple developers using Trellis cause conflicts?
+
+Per-developer and per-session state is isolated (`workspace/{name}/`, `.developer`, `.runtime/sessions/<session-key>.json`). Shared state is `.trellis/spec/` and `.trellis/tasks/`; they go through PR review like any code. Use `--assignee` when creating a task to avoid collisions.
+
+### Q30: What in `.trellis/` should be tracked by git? What's ignored?
+
+Track everything by default. `.trellis/` is designed as a team-shared directory:
+
+- `.trellis/spec/` — shared conventions, tracked
+- `.trellis/tasks/` — task PRDs, research, context, tracked
+- `.trellis/workspace/<name>/` — personal journals, tracked (teammates can read each other's progress)
+- `.trellis/workflow.md`, `scripts/` — tracked
+
+Already gitignored by `.trellis/.gitignore`: `.developer`, `.current-task`, `.runtime/`, `.backup-*`, `*.tmp`, `*.pyc` — runtime / personal pointer files.
+
+If you put `.trellis/` itself in your project `.gitignore`, AI can still read it (filesystem works), but you lose the team coordination layer that is the whole point.
+
+### Q31: My teammates don't all use Trellis. Will my changes (especially `AGENTS.md`) cause problems for them?
+
+The conflict surface is small. `AGENTS.md` is the only file Trellis writes that non-Trellis users typically also touch; Trellis writes a managed block delimited by `<!-- TRELLIS:START -->` and `<!-- TRELLIS:END -->` markers, so content outside the block is preserved.
+
+If teammates don't want Trellis content at all:
+
+- Skip the `AGENTS.md` write entirely — `.trellis/` doesn't depend on it to function.
+- Add `.trellis/`, `.codex/`, `.agents/`, `.claude/` etc. to your **local** `.git/info/exclude` (per-clone, not committed) to keep Trellis as your private layer.
+- Or commit `.trellis/spec/` only and gitignore the platform `.{name}/` directories at repo level.
+
+### Q32: Do I have to re-write specs from scratch for every new project? How do I reuse rules across projects?
+
+You don't. Maintain your team's shared rules as your own spec template repo, then pull them when starting new projects:
+
+```bash
+trellis init -r git@github.com:your-org/trellis-spec-template.git
+```
+
+Supports GitHub / GitLab / Bitbucket / self-hosted GitLab (HTTPS / SSH). Coding conventions live in one place, distributed via your git infrastructure — no copy-pasting per project.
+
+## Customize & interop
+
+### Q33: Can I use other plugins / skills / MCPs (Superpowers, Context7, custom MCPs) alongside Trellis?
+
+**MCP** — yes. MCPs are tools the model calls; they don't change Trellis's workflow injection.
+
+**Heavy plugins / skill packs that own the workflow** (e.g., Superpowers) — likely conflict. Trellis injects workflow via SessionStart hook + `<workflow-state>` breadcrumbs; another framework doing the same thing fights for the same context slot. Pick one workflow framework per session.
+
+**Light single-purpose skills** (one-off helpers, custom slash commands) — fine to run alongside.
+
+If you really need them to coexist (e.g., you want to pull in one specific skill from Superpowers), see Q34 (how to customize via `trellis-meta`) — that skill rewrites Trellis's workflow so it doesn't fight with your other framework.
+
+### Q34: Can Trellis coexist with Superpowers / OpenSpec / OMO / similar frameworks?
+
+Not recommended. These are all workflow frameworks (not just skill collections); each has its own injection mechanism, trigger rules, and phase definitions. Running two workflow frameworks in the same session means:
+
+- The AI gets two sets of phase prompts and picks probabilistically — output becomes unpredictable
+- Hook / SessionStart / breadcrumb mechanisms overwrite or stack on each other, bloating context
+- Debugging gets harder because you can't tell which framework caused a given behavior
+
+**One workflow framework per session.** Switch frameworks in a fresh session, don't mix them.
+
+If you want one specific **skill** from another tool (not its whole workflow), see Q34 — use `trellis-meta` to fold that skill into Trellis's flow, but don't run two phase controllers in parallel.
+
+### Q35: How do I customize Trellis to match my team's habits?
+
+Use the `trellis-meta` skill. It's purpose-built for forking Trellis: remove or add phases (e.g., drop the check phase if it's slow locally, or add a PRD admission gate / system-test gate), change skill trigger conditions, edit sub-agent prompts, customize workflow-state text — all driven by the skill, which guides you through edits to `.trellis/workflow.md` and related templates.
+
+Install:
+
+```bash
+npx skills add mindfold-ai/marketplace --skill trellis-meta
+```
+
+More at [`docs.trytrellis.app/skills-market/trellis-meta`](https://docs.trytrellis.app/skills-market/trellis-meta). All edits are markdown — no Python or hook code involved.
+
+### Q36: Obsidian doesn't show my `.trellis/` directory
+
+Obsidian hides directories starting with `.` by default. Two fixes. In Obsidian Settings → Files & Links, enable `Detect all file extensions` and `Show hidden files` if your version exposes the option. Otherwise symlink to a visible directory and point Obsidian there:
+
+```bash
+ln -s .trellis trellis-vault
+```
+
+Separately, `MM-DD-<slug>/` task names truncate in Obsidian's file explorer.
+
+### Q37: Does Trellis support Chinese workflow / specs / journals?
+
+Yes — the content layer is language-agnostic. Specs, PRDs, journals, and `workflow.md` are plain Markdown; write them in any language and the AI reads whatever's there. Trellis CLI output and the default English templates are currently in English, but you can replace template content with Chinese after `trellis init` (or fork your own template repo, see Q31). Chinese localization for built-in skill prompts is partially shipped and on the roadmap. None of this affects the workflow logic.
+
+---

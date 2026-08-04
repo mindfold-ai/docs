@@ -1,0 +1,29 @@
+---
+title: 'v0.6.10'
+description: '2026-07-28'
+---
+
+Patch release restoring Python 3.9–3.11 task script compatibility, complete Codex sub-agent context recovery for truncated hook output, and correct fallback-session cleanup.
+
+## Bug Fixes
+
+### Python task script compatibility
+
+Generated `.trellis/scripts/common/task_context.py` no longer uses multiline nested f-strings. All `task.py` commands parse on the documented Python 3.9+ floor, with warning text unchanged (#476).
+
+### Codex truncated hook context
+
+The `trellis-implement`, `trellis-check`, and `trellis-research` templates now detect `Full hook output saved to: <path>` and read the saved `SubagentStart` payload before treating `<!-- trellis-hook-injected -->` as complete. If the saved output cannot be read, they fall back to the active task's role JSONL and task docs (#465).
+
+### Fallback session cleanup
+
+`clear_active_task()` now deletes the session file named by the resolved `previous.context_key`, not the current process key. `task.py finish` clears a uniquely resolved `session-fallback` task and leaves ambiguous or unresolved session state untouched (#469).
+
+## Upgrade
+
+```bash
+npm install -g @mindfoldhq/trellis@latest
+trellis update
+```
+
+No `--migrate` required.

@@ -1,0 +1,174 @@
+---
+title: 'Custom Sub-agents'
+---
+
+## Custom Sub-agents
+
+Trellis ships three sub-agents (`trellis-implement`, `trellis-check`, `trellis-research`). You can modify them or add your own. This chapter walks through the Claude Code format as the main example, then lists the frontmatter differences on other platforms.
+
+<Note>
+  Sub-agents ship on 11 of 14 configured platforms: Claude Code, Cursor, OpenCode, Codex, Kiro,
+  Gemini CLI, Qoder, CodeBuddy, Copilot, Droid, Pi Agent. The agent file format varies by platform
+  (Markdown / TOML / JSON), and on platforms without a `PreToolUse` hook or extension equivalent the
+  sub-agents read their JSONL manifest plus `prd.md`, `design.md` if present, and `implement.md` if
+  present via a pull-based prelude instead of having that context injected. Codex can also run in
+  inline mode, where the main session reads the same artifacts through skills. Kilo, Antigravity,
+  and Devin do not expose a sub-agent primitive — the implement / check work runs inline in the main
+  session.
+</Note>
+
+### Sub-agent definition (Claude Code example)
+
+A sub-agent definition file lives at `.claude/agents/{name}.md` and uses YAML frontmatter:
+
+```markdown
+---
+name: agent-name
+description: |
+  One-line description of what this sub-agent does, used by the platform to decide when to spawn it.
+tools: Read, Write, Edit, Bash, Glob, Grep
+---
+
+# Agent Name
+
+Instructions for the sub-agent go here. Treat it as the sub-agent's system prompt.
+```
+
+Key frontmatter fields on Claude Code:
+
+| Field         | Meaning                                                                                                                                                            |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `name`        | Sub-agent identifier used in `Task(subagent_type="...")` calls                                                                                                     |
+| `description` | Used by the main session to decide when to spawn this sub-agent                                                                                                    |
+| `tools`       | Comma-separated list of tools the sub-agent may call                                                                                                               |
+| `model`       | Optional model override. Omit to inherit the session model; this is the current recommendation so Cursor users and similar are not billed on a forced Opus default |
+
+### Sub-agent file format is platform-specific
+
+The file extension, frontmatter shape, and tool-declaration syntax differ per platform:
+
+| Platform    | File                             | Tool / permission field                          | Example value                                                      |
+| ----------- | -------------------------------- | ------------------------------------------------ | ------------------------------------------------------------------ |
+| Claude Code | `.claude/agents/{name}.md`       | `tools:` (comma list)                            | `Read, Write, Edit, Bash, Glob, Grep, Task, Skill`                 |
+| Claude Code | (MCP tools)                      | same field, prefixed names                       | `mcp__exa__web_search_exa`, `mcp__chrome-devtools__*`              |
+| Cursor      | `.cursor/agents/{name}.md`       | CC-style `tools:` comma list                     | `Read, Write, Edit, Bash`                                          |
+| OpenCode    | `.opencode/agents/{name}.md`     | `permission:` (object)                           | `{ read: allow, write: allow, bash: allow, "mcp__exa__*": allow }` |
+| Codex       | `.codex/agents/{name}.toml`      | TOML `sandbox_mode` + tool toggles               | `sandbox_mode = "workspace-write"`                                 |
+| Kiro        | `.kiro/agents/{name}.json`       | JSON `tools:` (lowercase array)                  | `["read", "write", "bash"]`                                        |
+| Gemini CLI  | `.gemini/agents/{name}.md`       | CC-style `tools:` comma list                     | `Read, Write, Edit, Bash`                                          |
+| Qoder       | `.qoder/agents/{name}.md`        | CC-style `tools:` comma list                     | `Read, Write, Edit, Bash`                                          |
+| CodeBuddy   | `.codebuddy/agents/{name}.md`    | CC-style `tools:` comma list                     | `Read, Write, Edit, Bash`                                          |
+| Copilot     | `.github/agents/{name}.agent.md` | CC-style `tools:` comma list                     | `Read, Write, Edit, Bash`                                          |
+| Droid       | `.factory/droids/{name}.md`      | CC-style `tools:` comma list                     | `Read, Write, Edit, Bash`                                          |
+| Pi Agent    | `.pi/agents/{name}.md`           | CC-style `tools:` comma list + extension context | `Read, Write, Edit, Bash`                                          |
+
+### Pi Agent model and thinking config
+
+Pi sub-agent definitions live under `.pi/agents/{name}.md`. They use Markdown with YAML frontmatter, like Claude-style agents, plus optional Pi run configuration:
+
+```markdown
+---
+name: trellis-review
+description: |
+  Reviews the current diff and reports correctness issues.
+tools: Read, Write, Edit, Bash, Glob, Grep
+model: anthropic/claude-sonnet-4
+thinking: high
+fallbackModels:
+  - openai/gpt-5-mini
+---
+
+# trellis-review
+
+Review the current diff against the active Trellis task and project specs.
+```
+
+The Pi extension reads this frontmatter before it launches the child Pi process. It starts nested agents in text/no-session mode, forwards the current Trellis context id, and maps run config to Pi CLI args:
+
+| Config               | Child Pi args                                                               |
+| -------------------- | --------------------------------------------------------------------------- |
+| `model` + `thinking` | `--model <model>:<thinking>` unless the model already has a thinking suffix |
+| `model` only         | `--model <model>`                                                           |
+| `thinking` only      | `--thinking <level>`                                                        |
+
+Per-call `model` / `thinking` passed to the Pi `subagent` tool overrides frontmatter for that one child run. `fallbackModels` / `fallback_models` is parsed for pi-subagents-compatible files, but Trellis does not pass it to Pi CLI because Pi has no documented stable fallback-model flag.
+
+For custom context injection, use a task-local JSONL file convention and extend `.pi/extensions/trellis/index.ts` to handle the new sub-agent name. Pi Agent does not load Python hook scripts.
+
+If you author a sub-agent that should work on multiple platforms, put the canonical Claude-Code version in `packages/cli/src/templates/claude/agents/` and add platform adapters in `packages/cli/src/configurators/` that translate the frontmatter into each platform's native syntax. Trellis already does this for the shipped `trellis-implement` / `trellis-check` / `trellis-research`.
+
+### Modifying a shipped sub-agent
+
+Example: add a timeout and a stricter tool budget to `trellis-check`.
+
+```markdown
+---
+name: trellis-check
+description: |
+  Code quality check expert. Reviews diffs against specs, runs lint/typecheck/test, self-fixes.
+tools: Read, Write, Edit, Bash, Glob, Grep
+timeout: 600000
+---
+```
+
+If you plan to roll this out across your team, put the change in `.trellis/spec/backend/` (or wherever your convention lives) instead of the agent definition, so the sub-agent's behavior changes through spec injection rather than a fork.
+
+### Creating a new sub-agent
+
+Example: a `trellis-test` sub-agent that writes tests for the current diff.
+
+````markdown
+---
+name: trellis-test
+description: |
+  Writes comprehensive tests for the current diff. Runs them and reports pass/fail.
+tools: Read, Write, Edit, Bash, Glob, Grep
+---
+
+# trellis-test
+
+You are the trellis-test sub-agent in the Trellis workflow.
+
+## Responsibilities
+
+1. Analyze the current diff to identify testable units.
+2. Write unit tests for new functions and components.
+3. Write integration tests for cross-module interactions.
+4. Run the test suite and report results.
+
+## Flow
+
+#### Get changes
+
+```bash
+git diff --name-only HEAD
+```
+
+#### Identify testable code
+
+For each changed file, identify functions or components that need tests.
+
+#### Write tests
+
+Follow the existing test patterns in the repository. Do not invent a new test style.
+
+#### Run tests
+
+```bash
+pnpm test
+```
+````
+
+### Context injection
+
+If you want your sub-agent to receive task and spec context the way the shipped
+ones do:
+
+1. Accept a JSONL name convention (e.g. `test.jsonl`) in each task directory.
+2. Load the JSONL entries first, then `prd.md`, then `design.md` if present, then `implement.md` if present.
+3. On platforms with a `PreToolUse` (sub-agent) hook or extension equivalent — Claude Code, Cursor, OpenCode, CodeBuddy, Droid, Pi Agent — edit `inject-subagent-context` or the Pi extension to handle the new sub-agent type.
+4. On platforms without that injection point (Codex, Kiro, Gemini, Qoder, Copilot), follow the pull-based prelude pattern the shipped sub-agents use: prepend a block at the top of the agent file telling the sub-agent to `Read` its JSONL and task artifacts before acting.
+
+For a detailed walkthrough, see chapter 11 on hooks.
+
+---

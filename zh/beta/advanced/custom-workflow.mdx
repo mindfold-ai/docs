@@ -1,0 +1,180 @@
+---
+title: '自定义 Workflow 格式'
+description: '创建 workflow 变体，并保留 SessionStart、每轮注入、phase 查询和 sub-agent 运行时依赖的 Markdown 契约。'
+---
+
+Workflow 文件既是说明文档，也是运行时输入。Trellis 会解析里面的标题和 marker
+block，用来生成 SessionStart 上下文、每轮指引和 step 级说明。
+
+## 从生成的脚手架开始
+
+创建一个本地 workflow：
+
+```bash
+trellis workflow create review-first
+```
+
+命令会从完整的内置 native workflow 生成
+`.trellis/workflows/review-first.md`。与空白文件相比，从 native 开始更安全，
+因为所有 parser 依赖的结构都已经存在。
+
+创建后，命令会依次询问是否把它设为项目默认值和个人默认值。只想生成文件时使用
+`--skip-defaults`。
+
+<Note>这个命令不会替换或删除 `.trellis/workflow.md`。该文件始终是零配置的全局 回退。</Note>
+
+## 理解文件布局
+
+```text
+.trellis/
+├── workflow.md
+├── workflows/
+│   └── review-first.md
+├── config.yaml
+└── .developer
+```
+
+运行时按下面的顺序选择文件：
+
+1. 当前任务：`task.json` 的 `workflow`
+2. 当前开发者：`.developer` 的 `workflow=`
+3. 项目：`config.yaml` 的 `default_workflow`
+4. 全局回退：`.trellis/workflow.md`
+
+选择命令和当前平台限制见
+[动态 Workflow 切换](/zh/beta/advanced/dynamic-workflow-switching)。
+
+## 保留运行时契约
+
+生成的脚手架是最完整的参考。你可以把 workflow 改得更短，但要保留下面这些
+结构：
+
+```markdown
+## Phase Index
+
+Phase 1: Plan
+Phase 2: Execute
+Phase 3: Finish
+
+[workflow-state:no_task]
+Explain what the agent should do when no task is active.
+[/workflow-state:no_task]
+
+[workflow-state:planning]
+Explain the planning requirements.
+[/workflow-state:planning]
+
+[workflow-state:planning-inline]
+Explain the Codex inline planning requirements.
+[/workflow-state:planning-inline]
+
+[workflow-state:in_progress]
+Explain the implementation, verification, and finish flow.
+[/workflow-state:in_progress]
+
+[workflow-state:in_progress-inline]
+Explain the Codex inline implementation flow.
+[/workflow-state:in_progress-inline]
+
+[workflow-state:completed]
+Explain the completed-task action.
+[/workflow-state:completed]
+
+## Phase 1: Plan
+
+#### 1.0 Create task
+
+Detailed instructions for this step.
+
+## Phase 2: Execute
+
+#### 2.1 Implement
+
+Detailed instructions for this step.
+
+## Phase 3: Finish
+
+#### 3.4 Commit changes
+
+Detailed instructions for this step.
+```
+
+Parser 依赖的部分如下：
+
+| 结构                           | 消费方                               | 要求                                             |
+| ------------------------------ | ------------------------------------ | ------------------------------------------------ |
+| `## Phase Index`               | SessionStart                         | 标题必须完全一致；内容到 `## Phase 1: Plan` 为止 |
+| `## Phase 1: Plan`             | SessionStart 边界                    | 保留这个精确标题                                 |
+| `#### X.Y`                     | `get_context.py --mode phase --step` | 使用 `2.1` 这样的数字 step id                    |
+| `[workflow-state:STATUS]` 配对 | 每轮 hook                            | 开始和结束标签的 status 必须相同                 |
+| 平台 marker 配对               | Phase renderer                       | 开始和结束的平台列表必须相同                     |
+
+标准 workflow-state id 包括 `no_task`、`planning`、`planning-inline`、
+`in_progress`、`in_progress-inline` 和 `completed`。自定义 id 可以使用字母、
+数字、下划线和短横线，但只有某个任务生命周期路径把同样的值写入
+`task.json.status` 后，它才会实际生效。
+
+## 按平台路由指引
+
+平台 block 是可选的。当同一个 step 在不同 harness 中需要不同操作时使用：
+
+```markdown
+[Claude Code, Cursor, OpenCode, codex-sub-agent]
+Dispatch the implementation agent with the active task context.
+[/Claude Code, Cursor, OpenCode, codex-sub-agent]
+
+[codex-inline, Kilo, Antigravity, Devin]
+Load the project specs and implement in the main session.
+[/codex-inline, Kilo, Antigravity, Devin]
+```
+
+平台匹配忽略大小写、空格、短横线和下划线。Marker 所在行只能包含方括号中的
+平台列表。
+
+## 理解 hook 的读取边界
+
+Hook 由 `trellis init` 和 `trellis update` 安装。不要在 workflow 文件里声明
+hook 事件名或脚本命令。
+
+| 运行时路径                    | 从选中的 workflow 读取什么           |
+| ----------------------------- | ------------------------------------ |
+| SessionStart                  | `## Phase Index` 概览                |
+| 每轮 workflow-state hook      | 与当前任务 status 对应的 block       |
+| `get_context.py --mode phase` | Phase Index 或某一个 `#### X.Y` step |
+| 父会话派发                    | 选中 step 里的 agent 路由指引        |
+
+Sub-agent hook 是另一条独立通道。它依次注入 `implement.jsonl` 或
+`check.jsonl`，然后注入 `prd.md`、存在时的 `design.md` 和存在时的
+`implement.md`，不会解析 workflow Markdown。选中的 workflow 决定父会话何时、
+如何派发；sub-agent hook 提供具体任务材料。
+
+## 修改后验证
+
+运行真实的 phase parser：
+
+```bash
+python3 ./.trellis/scripts/get_context.py --mode phase
+python3 ./.trellis/scripts/get_context.py --mode phase --step 2.1
+python3 ./.trellis/scripts/get_context.py --mode phase --step 2.1 --platform claude
+python3 ./.trellis/scripts/get_context.py --mode phase --step 2.1 --platform codex
+```
+
+Windows 上使用 `python`，其他平台使用 `python3`。
+
+`trellis workflow --save` 会在 marketplace 模板缺少标准 phase、step 或
+workflow-state marker 时发出警告。警告不会阻止保存，因此上面的 parser 命令仍然
+是自定义内容的最终检查。
+
+## 安全修改范围
+
+你可以自由修改正文、增加 phase、修改路由指引以及增加自定义 status。除非同时
+更新所有运行时消费方，否则不要改变 parser 语法。
+
+Workflow-state 文本会在下一轮用户消息生效；SessionStart 概览会在新会话生效；
+step 内容会在下一次 `get_context.py --mode phase` 查询时生效。
+
+## 相关页面
+
+- [动态 Workflow 切换](/zh/beta/advanced/dynamic-workflow-switching)
+- [动态 Spec 加载](/zh/beta/advanced/dynamic-spec-loading)
+- [日常使用](/zh/beta/start/everyday-use)

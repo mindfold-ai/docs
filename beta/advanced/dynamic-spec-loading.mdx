@@ -1,0 +1,157 @@
+---
+title: 'Dynamic Spec Loading'
+description: 'Load the project rules that govern a file at the moment an agent reads or changes it.'
+---
+
+Trellis can attach specs to code paths and deliver the matching rules when an
+agent touches a file. This keeps the prompt small while putting the relevant
+rules close to the edit they govern.
+
+## Declare which paths a spec governs
+
+Add a `paths` list to the spec's YAML frontmatter. Paths are relative to the
+repository root.
+
+```md
+---
+name: commands-workflow
+description: Workflow command and resolver contracts
+paths:
+  - packages/cli/src/commands/workflow.ts
+  - packages/cli/src/utils/workflow-resolver.ts
+  - packages/cli/test/commands/workflow*.test.ts
+---
+
+# Workflow command rules
+
+...
+```
+
+The matcher supports:
+
+- `*` within one path segment
+- `**` across path segments
+- `?` for one character
+- a trailing `/` as shorthand for everything below that directory
+
+Specs without `paths` frontmatter keep their existing behavior. They are not
+loaded automatically.
+
+## What the agent receives
+
+For each matching spec, Trellis chooses one of three deliveries:
+
+| Situation                                | Delivery                                      |
+| ---------------------------------------- | --------------------------------------------- |
+| First matching touch in a session        | Full, budgeted spec body                      |
+| Unchanged spec inside the refresh window | No repeated output                            |
+| Unchanged spec after the refresh window  | Short ticket with the spec path and read hint |
+| Spec content changed                     | Full body again                               |
+| Session was cleared or compacted         | Full body again on the next matching touch    |
+
+The refresh window is fixed. Silent touches do not extend it, so continuous
+editing still receives a later reminder.
+
+When several specs match one file, narrower path patterns are considered
+before broad patterns. If the event budget cannot hold every full body,
+remaining matches become an index of spec paths instead of disappearing.
+
+## Platform behavior
+
+| Platform        | Trigger                                                    | Behavior                                                                                                                                    |
+| --------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Claude Code     | `PostToolUse` for `Read`, `Edit`, `Write`, and `MultiEdit` | Delivers matching context after the file operation. Claude Code's read-before-write behavior usually loads the rules before the later edit. |
+| Codex           | `PreToolUse` for native `apply_patch`                      | Parses every add, update, delete, and move header before the patch runs.                                                                    |
+| OpenCode        | `tool.execute.before` for `write`, `edit`, `apply_patch`   | Blocks a newly governed mutation once, returns the specs as a model-visible tool error, then allows the model's retry.                      |
+| Other platforms | Pull mode                                                  | Query matching spec paths explicitly with `get_context.py`.                                                                                 |
+
+### Why Codex and OpenCode block the first mutation once
+
+Codex and OpenCode do not require a file read before an edit. When a mutation
+first matches a spec, Trellis returns the full rules and blocks that call once:
+
+```text
+mutation requested
+  → Trellis injects governing specs
+  → mutation is blocked
+  → the model reads the specs and retries
+  → retry proceeds
+```
+
+Only a newly delivered **full** spec blocks the patch. A short refresh ticket
+does not block, and an unchanged spec inside the refresh window produces no
+output. Codex receives a native hook denial. OpenCode receives the same context
+inside a tool error because its stable plugin API has no direct
+`additionalContext` return field. This is a context-delivery handshake, not a
+policy rejection.
+
+## Configure the budget and refresh window
+
+The defaults fit the host context limits and require no configuration:
+
+```yaml
+spec_injection:
+  enabled: true
+  max_spec_chars: 9400
+  max_total_chars: 9500
+  refresh_window_seconds: 2700
+  tools: [Read, Edit, Write, MultiEdit]
+```
+
+| Key                      | Meaning                                                                                                                                                                              |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `enabled`                | Set to `false` to disable dynamic spec loading.                                                                                                                                      |
+| `max_spec_chars`         | Maximum characters from one spec. `0` removes this limit.                                                                                                                            |
+| `max_total_chars`        | Maximum characters for one hook event. `0` removes this limit.                                                                                                                       |
+| `refresh_window_seconds` | Seconds before an unchanged spec gets a short ticket. `0` disables time-based refresh.                                                                                               |
+| `tools`                  | Logical tool names that can trigger matching. Codex and OpenCode `apply_patch` use `Edit`; OpenCode `write` and `edit` use `Write` and `Edit`. An empty list disables every trigger. |
+
+Truncated bodies include a notice with the full spec path so the agent can read
+the source file directly.
+
+## Inspect matches manually
+
+Use pull mode to check which specs govern a path without loading their bodies:
+
+```bash
+# macOS and Linux
+python3 ./.trellis/scripts/get_context.py --mode spec \
+  --file packages/cli/src/commands/workflow.ts
+
+# Windows
+python ./.trellis/scripts/get_context.py --mode spec \
+  --file packages/cli/src/commands/workflow.ts
+```
+
+Add `--json` for structured output:
+
+```bash
+python3 ./.trellis/scripts/get_context.py --mode spec \
+  --file packages/cli/src/commands/workflow.ts \
+  --json
+```
+
+An empty match is valid and returns no governing specs.
+
+## State, reset, and failure behavior
+
+Delivery state is stored outside the repository under
+`~/.trellis/spec-inject/`. Parent and sub-agent histories are separate.
+Claude Code and Codex use `SessionStart(source=clear|compact)` to record a
+shared reset marker. OpenCode maps `session.compacted` to the same compact
+reset, so rules removed by compaction are delivered again.
+
+The hook does not parse Claude Code, Codex, or OpenCode transcript contents.
+Transcript formats are host internals and are not part of this contract.
+
+Matching and state failures are fail-open: malformed frontmatter, missing
+paths, unreadable or unwritable state, or an internal hook error must not break
+the host tool call. The only intentional block is the first Codex or OpenCode
+mutation that has just received a full governing spec with persisted delivery
+state.
+
+## Related pages
+
+- [Dynamic Workflow Switching](/beta/advanced/dynamic-workflow-switching)
+- [Custom Hooks](/beta/advanced/custom-hooks)
+- [Architecture](/beta/advanced/architecture)

@@ -1,0 +1,29 @@
+---
+title: 'v0.6.10'
+description: '2026-07-28'
+---
+
+补丁版本：恢复 Python 3.9–3.11 任务脚本兼容性、恢复被截断的 Codex 子代理完整上下文，并修正 fallback session 清理。
+
+## Bug Fixes
+
+### Python 任务脚本兼容性
+
+生成的 `.trellis/scripts/common/task_context.py` 不再使用多行嵌套 f-string。所有 `task.py` 命令现在都能在文档规定的 Python 3.9+ 最低版本上解析，警告文本保持不变（#476）。
+
+### Codex 截断 hook 上下文
+
+`trellis-implement`、`trellis-check` 和 `trellis-research` 模板现在会检测 `Full hook output saved to: <path>`，并在把 `<!-- trellis-hook-injected -->` 视为完整标记前读取保存的 `SubagentStart` 内容。如果无法读取保存的内容，它们会回退到当前任务的角色 JSONL 和任务文档（#465）。
+
+### Fallback session 清理
+
+`clear_active_task()` 现在删除由解析后的 `previous.context_key` 指定的 session 文件，而不是当前进程的 key。`task.py finish` 会清理唯一解析出的 `session-fallback` 任务，并保留有歧义或未解析的 session 状态（#469）。
+
+## Upgrade
+
+```bash
+npm install -g @mindfoldhq/trellis@latest
+trellis update
+```
+
+不需要 `--migrate`。
