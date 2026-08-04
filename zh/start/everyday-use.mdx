@@ -115,7 +115,7 @@ AI 做的任务分类：
 典型一次 task 的对话：
 
 1. 你用自然语言描述需求 → AI 先分类请求；当 Trellis 有价值时，先询问是否创建 task。你同意后，`trellis-brainstorm` 创建 task 并起草 `prd.md`。
-2. `prd.md` 跟你确认完，你输入 `continue` → 它记录七项规划画像；runtime 根据固定规则推导 `lightweight`、`complex` 或 `pending`，不再依赖 AI 自由判断。
+2. `prd.md` 跟你确认完，你输入 `continue` → 它判断任务是轻量任务，还是需要补 `design.md` 和 `implement.md`。
 3. Planning artifacts review 通过后再输入 `continue` → 它 start task 并进入 implement/check。Sub-agent mode 会整理 `implement.jsonl` / `check.jsonl`；inline mode 直接读取 artifacts/specs。
 4. sub-agent 跑完你再 `continue` → 它知道该走 `trellis-update-spec`，最后 `finish-work`。
 
@@ -131,7 +131,7 @@ Skill 不需要显式命令，平台根据用户意图自动匹配。匹配不�
 
 - 先检查代码、测试、配置、文档、现有 spec 和任务历史，再问用户问题。
 - 产出任务名和 slug；需要时通过 `task.py create` 创建 task。
-- 起草并迭代 `prd.md`，记录需求和验收标准。
+- 起草并迭代 `prd.md`，记录目标、需求和用户可见结果。
 - 一次只问一个问题，并给出推荐答案。
 - 复杂任务在实现前补齐 `design.md` 和 `implement.md`。
 
@@ -186,11 +186,10 @@ Sub-agent 是独立的 AI 子进程，各自有 prompt 和（视平台而定）�
 ### 2.1 任务生命周期
 
 ```
-create → plan artifacts → 启用时完成用户界面原型批准 → optional jsonl context → start → implement/check → finish → archive
+create → plan artifacts → optional jsonl context → start → implement/check → finish → archive
 
 create：                任务目录 + task.json + 默认 prd.md
 plan artifacts：        每个任务都有 prd.md；复杂任务 start 前补 design.md + implement.md
-用户界面原型批准：      meta.ui=true 的任务完成 prototype/，并把用户批准绑定到当前摘要
 optional jsonl context： 需要稳定注入 spec 或 research 文件时，AI 填 implement/check 上下文
 start：                 把当前 AI 会话/窗口的任务标记为 in_progress
 implement/check：       开发与验证循环
@@ -216,8 +215,6 @@ TASK_DIR=$(./.trellis/scripts/task.py create "新增用户登录" \
 # 创建的文件：task.json、prd.md
 # sub-agent 平台上还可能创建 implement.jsonl + check.jsonl
 ```
-
-每个标准 Task 都以规划合同 v2 和 `planning_tier=pending` 开始。使用 `set-planning-profile` 回答交互、数据模型、公共合同、跨层、生命周期、安全/兼容/发布和技术取舍七项问题：全部为 `false` 推导为 `lightweight`；任一为 `true` 推导为 `complex`。用户界面工作增加 `--meta ui=true`，系统会创建 `prototype/manifest.json`，并在 PRD“用户可见结果”中生成入口、预览、状态和摘要管理块。
 
 #### 2.2.2 上下文配置
 
@@ -256,25 +253,6 @@ TASK_DIR=$(./.trellis/scripts/task.py create "新增用户登录" \
 #### 2.2.3 任务控制
 
 ```bash
-# 一次保存七项答案并推导层级
-./.trellis/scripts/task.py set-planning-profile "$TASK_DIR" \
-  --interaction-change false \
-  --data-model-change false \
-  --public-contract-change true \
-  --cross-layer-change true \
-  --state-lifecycle-change false \
-  --security-compatibility-rollout-change false \
-  --technical-tradeoff true
-
-# 检查画像、PRD、复杂产物、交互图、数据库和 UI 合同
-./.trellis/scripts/task.py planning-status "$TASK_DIR"
-
-# 读取入口、重新计算的摘要和批准状态
-./.trellis/scripts/task.py prototype-status "$TASK_DIR"
-
-# 用户查看最新原型后，把批准绑定到当前摘要
-./.trellis/scripts/task.py approve-prototype "$TASK_DIR" "在原型审查中批准"
-
 # 设为当前 AI 会话/窗口的任务
 # 写入 .trellis/.runtime/sessions/<session-key>.json
 ./.trellis/scripts/task.py start "$TASK_DIR"
@@ -381,8 +359,6 @@ TASK_DIR=$(./.trellis/scripts/task.py create "新增用户登录" \
 - `status` → `planning → in_progress → completed`
 - `completedAt` → `task.py archive` 填上（archive 不回写 commit hash）
 - `parent` / `children` → `task.py create --parent` 或 `add-subtask` 设置
-- `meta.ui` / `meta.prototype_manifest` → `create --meta ui=true` 启用用户界面原型门禁，并写入标准 manifest 路径
-- `meta.planning_contract_version` / `meta.planning_tier` 与七项画像字段 → `set-planning-profile` 推导 `pending`、`lightweight` 或 `complex`
 
 <Note>
   `worktree_path` / `commit` / `pr_url` 是 schema 占位字段，0.5 没有脚本主动写入。想记 commit 或 PR
@@ -399,7 +375,7 @@ task.py start      →  planning 自动改写成 in_progress（其他状态保�
 task.py archive    →  status: "completed" + 移到 archive/
 ```
 
-`planning` / `in_progress` / `completed` 对应 `workflow.md` 的三个 Phase。`task.py start` 在把 `planning` 改写为 `in_progress` 前，会校验规划合同 v2；画像未决、PRD 编号/映射错误、复杂产物缺失、交互图不完整或数据库设计不完整时均无副作用拒绝。对于 `meta.ui=true`，它还会拒绝缺失、待批准、批准过期、路径越界或 PRD 引用不一致的原型。其他状态不动（`review` 这类自定义状态重启不会被清零）。
+`planning` / `in_progress` / `completed` 对应 `workflow.md` 的三个 Phase。`task.py start` 会自动把 `planning` 改写成 `in_progress`，其他状态不动（`review` 这类自定义状态重启不会被清零）。`task.py list --status` 还接受 `review` 作为过滤条件，如果你想要更多自定义状态，在 `workflow.md` 里加 `[workflow-state:<name>]` block 就行。
 
 ### 2.4 JSONL 上下文配置实战
 
@@ -772,3 +748,10 @@ await Promise.all(users.map((user) => prisma.user.create({ data: user })));
 ### 3.4 Bootstrap 引导首次填充
 
 `trellis init` 会同时建一个 bootstrap 任务（`00-bootstrap-guidelines`）。第一次 Trellis 会话里，AI 会认出它，调 `trellis-research` 扫一遍你的代码，然后把 `frontend/` / `backend/` / `guides/` 下那堆空模板按你的真实项目填起来——技术栈、约定、目录结构都从代码里读出来。
+<!-- prd-contract:START -->
+
+## 开发前的 PRD
+
+在 `task.py start` 前使用固定的“目标”“需求”“用户可见结果”合同。UI 原型在用户明确确认前保持 `pending_user_approval`。
+
+<!-- prd-contract:END -->

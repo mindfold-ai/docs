@@ -117,12 +117,12 @@ The hook scripts are parser-only. They do not contain fallback copies of the bre
 
 Default statuses:
 
-| Status        | Writer                  | Notes                                                                                                                                                     |
-| ------------- | ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `no_task`     | Synthesized by the hook | No active task pointer for the current session.                                                                                                           |
-| `planning`    | `task.py create`        | Planning artifacts are active; complex tasks need `design.md` and `implement.md`, while `meta.ui=true` tasks also need a complete, approved `prototype/`. |
-| `in_progress` | `task.py start`         | Implementation, checking, and finish steps are active.                                                                                                    |
-| `completed`   | `task.py archive`       | Written immediately before archive move; not normally visible as a live breadcrumb.                                                                       |
+| Status        | Writer                  | Notes                                                                                                                                                    |
+| ------------- | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `no_task`     | Synthesized by the hook | No active task pointer for the current session.                                                                                                          |
+| `planning`    | `task.py create`        | Requirements and planning artifacts are active; lightweight tasks can be PRD-only, while complex tasks need `design.md` and `implement.md` before start. |
+| `in_progress` | `task.py start`         | Implementation, checking, and finish steps are active.                                                                                                   |
+| `completed`   | `task.py archive`       | Written immediately before archive move; not normally visible as a live breadcrumb.                                                                      |
 
 `task.py create` best-effort sets the current session's active-task pointer, so `planning` is reachable during brainstorm and JSONL curation.
 
@@ -138,8 +138,7 @@ Each task is one directory:
 ├── implement.md
 ├── implement.jsonl
 ├── check.jsonl
-├── research/
-└── prototype/          # UI tasks: manifest, entry, preview, assets
+└── research/
 ```
 
 Important files:
@@ -147,20 +146,19 @@ Important files:
 | File              | Purpose                                                                                                  |
 | ----------------- | -------------------------------------------------------------------------------------------------------- |
 | `task.json`       | Status, priority, assignee, branch, PR URL, parent/child relationships, and extension metadata.          |
-| `prd.md`          | Requirements, constraints, acceptance criteria, and out-of-scope items.                                  |
+| `prd.md`          | Goal, Requirements, and User-visible Outcomes; technical design, execution, and evidence live in companion artifacts. |
 | `design.md`       | Technical design for complex tasks: boundaries, contracts, data flow, compatibility, tradeoffs.          |
 | `implement.md`    | Execution plan for complex tasks: ordered checklist, validation commands, review gates, rollback points. |
 | `implement.jsonl` | Spec and research manifest for implementation context.                                                   |
 | `check.jsonl`     | Spec and research manifest for review and verification context.                                          |
 | `research/`       | Research artifacts written by `trellis-research` or the main planning flow.                              |
-| `prototype/`      | UI prototype contract and digest-bound approval; created only when `meta.ui=true`.                       |
 
 Task lifecycle hooks are command events, not generic status watchers:
 
 | Lifecycle event | Fires when                                  | Meaning                                                                                |
 | --------------- | ------------------------------------------- | -------------------------------------------------------------------------------------- |
 | `after_create`  | `task.py create` finishes                   | A task directory exists.                                                               |
-| `after_start`   | `task.py start` finishes                    | The task entered `in_progress`; a failed UI prototype gate does not emit this event.   |
+| `after_start`   | `task.py start` finishes                    | The task entered `in_progress`.                                                        |
 | `after_finish`  | `task.py finish` clears the session pointer | The current AI session detached from the task; the task may still be active elsewhere. |
 | `after_archive` | `task.py archive` finishes                  | The task is archived; use this for external "done" sync.                               |
 
@@ -280,3 +278,10 @@ For local customization, use the bundled `trellis-meta` skill as the map. It tel
 | Change hook behavior                                       | Platform hook settings plus `.trellis/scripts/` hook implementations                            |
 | Change implement/check agent behavior                      | Platform agent files and task JSONL context rules                                               |
 | Add team-specific coding rules                             | `.trellis/spec/` or a project-local skill                                                       |
+<!-- prd-contract:START -->
+
+## PRD contract boundary
+
+The task system keeps product intent in the three fixed PRD sections and puts technical design, execution, and evidence in their own artifacts.
+
+<!-- prd-contract:END -->

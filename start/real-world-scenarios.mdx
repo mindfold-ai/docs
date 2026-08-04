@@ -178,9 +178,9 @@ frontend states, tests, and rollout risks.
 
 ## Goal
 
-Workspace admins can invite teammates by email and manage pending invites.
+1. Let workspace admins invite teammates by email and manage pending invites.
 
-## In scope
+## Requirements
 
 - Create invite
 - Resend invite
@@ -188,18 +188,12 @@ Workspace admins can invite teammates by email and manage pending invites.
 - Accept invite
 - Expiration handling
 
-## Out of scope
+## User-visible Outcomes
 
-- Bulk CSV import
-- SSO provisioning
-- Role templates
-
-## Acceptance criteria
-
-- Non-admin users cannot create, resend, or revoke invites.
-- Expired invites show a recoverable error.
-- Invite acceptance is idempotent.
-- Tests cover permission checks and expired invite behavior.
+- [ ] Non-admin users cannot create, resend, or revoke invites.
+- [ ] Expired invites show a recoverable error.
+- [ ] Invite acceptance is idempotent.
+- [ ] Tests cover permission checks and expired invite behavior.
 ```
 
 ### 3.4 Task and subtask split
@@ -232,7 +226,7 @@ boundary, such as bulk CSV import, SSO provisioning, or role templates.
 ### 3.5 Workflow
 
 1. **User** describes the feature in natural language; answers clarifying questions and confirms scope as planning progresses → **AI** classifies the request and asks for Trellis task creation. After the user agrees, AI loads `trellis-brainstorm`, inspects relevant code/docs before asking repo-answerable questions, creates the task (`task.py create`), and captures clarified Goal / In scope / Out of scope / Acceptance criteria into `prd.md` (Phase 1.1).
-2. If the feature includes UI work, **AI** creates it with `--meta ui=true`, completes the entry and preview under `prototype/`, shows the latest prototype to the **User**, and records approval with `task.py approve-prototype` before start. **AI** also configures `implement.jsonl` / `check.jsonl` with the specs the task touches (Phase 1.3).
+2. **AI** configures `implement.jsonl` / `check.jsonl` with the specs the task touches (Phase 1.3).
 3. **User** types `/trellis:continue` → **AI** dispatches `trellis-implement` and builds the smallest end-to-end slice against the PRD (Phase 2.1).
 4. **User** types `/trellis:continue` → **AI** dispatches `trellis-check`, reviewing cross-layer contracts via `check.jsonl` (UI input, API validation, database writes, email side effects, permission-failure paths) and fixing issues in place (Phase 2.2).
 5. **User** types `/trellis:continue` → **AI** advances to Phase 3, checks whether the task produced any new reusable specs, and triggers `trellis-update-spec` to update `.trellis/spec/` if it did.
@@ -402,3 +396,10 @@ If you are unsure which scenario applies, start with one of these:
     Pilot Trellis in one repo before expanding usage.
   </Card>
 </CardGroup>
+<!-- prd-contract:START -->
+
+## Planning example boundary
+
+Keep user goals, required behavior, and observable outcomes in the PRD; move implementation details and repository evidence to their dedicated artifacts.
+
+<!-- prd-contract:END -->

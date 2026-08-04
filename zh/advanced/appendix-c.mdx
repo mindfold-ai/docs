@@ -31,18 +31,7 @@ title: '附录 C：task.json Schema 参考'
   "parent": "string", // 父任务目录名（顶层任务为 null）
   "relatedFiles": [], // 相关文件列表
   "notes": "string", // 备注（默认 ""）
-  "meta": {
-    "planning_contract_version": "2",
-    "planning_tier": "pending", // pending | lightweight | complex
-    "ui": "false",
-    "interaction_change": "unknown",
-    "data_model_change": "unknown",
-    "public_contract_change": "unknown",
-    "cross_layer_change": "unknown",
-    "state_lifecycle_change": "unknown",
-    "security_compatibility_rollout_change": "unknown",
-    "technical_tradeoff": "unknown"
-  }
+  "meta": {} // 项目级元数据（如 Linear issue id）
 }
 ```
 
@@ -55,8 +44,6 @@ title: '附录 C：task.json Schema 参考'
 </Note>
 
 早期版本创建的老任务可能少某些新字段（如 `package` 支持前的任务没有 `"package"` 键），`task.py` 把缺失字段按 null 处理，不会出错。
-
-`set-planning-profile` 会把七项 `unknown` 一次替换为 `true` / `false` 并推导 `planning_tier`：全部为 false 得到 `lightweight`，任一为 true 得到 `complex`，存在未决项则保持 `pending`。`meta.ui` 与层级独立，只有精确为字符串 `"true"` 时才启用原型门禁，并额外写入 `prototype_manifest`。没有 `planning_contract_version: "2"` 的历史 Task 维持原有 start 行为。
 
 ### 父子关系 vs `subtasks`——别混
 

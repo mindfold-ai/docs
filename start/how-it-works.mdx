@@ -118,9 +118,7 @@ This command writes a task directory:
 ├── task.json
 ├── prd.md
 ├── implement.jsonl
-├── check.jsonl
-├── research/
-└── prototype/          # created for --meta ui=true tasks
+└── check.jsonl
 ```
 
 `prd.md` is always created from the default template. `implement.jsonl` and
@@ -139,11 +137,10 @@ trust.
 
 | Artifact          | Required when               | Purpose                                                                                 |
 | ----------------- | --------------------------- | --------------------------------------------------------------------------------------- |
-| `prd.md`          | every task                  | Requirements, constraints, acceptance criteria, and out-of-scope items.                 |
+| `prd.md`          | every task                  | Goal, Requirements, and User-visible Outcomes; technical design, execution, and evidence live in companion artifacts. |
 | `design.md`       | complex tasks               | Technical design: boundaries, contracts, data flow, compatibility, tradeoffs, rollback. |
 | `implement.md`    | complex tasks               | Execution plan: ordered checklist, validation commands, review gates, rollback points.  |
 | `research/*.md`   | when investigation matters  | Durable facts discovered during planning.                                               |
-| `prototype/`      | UI tasks                    | Manifest, runnable entry, static preview, optional assets, and digest-bound approval.   |
 | `implement.jsonl` | when context manifests help | Spec/research files for implementation context.                                         |
 | `check.jsonl`     | when context manifests help | Spec/research files for review and verification context.                                |
 
@@ -152,13 +149,6 @@ human-readable plan; the JSONL file is a manifest for stable context files.
 
 Lightweight tasks can be PRD-only. Complex tasks need `prd.md`, `design.md`, and
 `implement.md` before they can start.
-
-UI tasks are created with `--meta ui=true`. Trellis creates `prototype/manifest.json`; planning completes the declared entry and preview, reads their current digest and status, shows that version to the user, and records approval with:
-
-```bash
-python3 ./.trellis/scripts/task.py prototype-status <task-dir>
-python3 ./.trellis/scripts/task.py approve-prototype <task-dir> "<approval-evidence>"
-```
 
 ## 6. Context manifests stay narrow
 
@@ -189,7 +179,7 @@ After artifact review, Trellis activates the task:
 python3 ./.trellis/scripts/task.py start <task-dir>
 ```
 
-This changes `task.json.status` from `planning` to `in_progress`. For `meta.ui=true`, it first validates the prototype directory, contained paths, current digest, and explicit approval. A failure leaves status, the active pointer, and `after_start` hooks unchanged.
+This changes `task.json.status` from `planning` to `in_progress`.
 
 On the next prompt, the workflow-state hook injects the matching
 `[workflow-state:in_progress]` block. That block covers implementation, check,
@@ -295,3 +285,10 @@ After the flow completes, durable state lives in files:
 The next AI session reads the repository state again. It does not need the
 previous chat transcript to know what the task was, what specs apply, or what
 workflow step comes next.
+<!-- prd-contract:START -->
+
+## Planning artifact boundary
+
+The PRD is the human-readable contract: `Goal`, `Requirements`, then `User-visible Outcomes`. Technical design, execution commands, and source evidence belong in `design.md`, `implement.md`, and `research/`.
+
+<!-- prd-contract:END -->

@@ -53,26 +53,22 @@ Available as real sub-agents on Claude Code, Cursor, OpenCode, Codex, Kiro, Gemi
 
 ### `task.py` Subcommands
 
-| Subcommand             | Purpose                                                                                           | Usage                                                              |
-| ---------------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| `create`               | Create task (also seeds `implement.jsonl` / `check.jsonl` when a sub-agent platform is installed) | `task.py create "title" [--slug name] [-a assignee] [-p priority]` |
-| `add-context`          | Add context entry (primary way to populate jsonl after `create`)                                  | `task.py add-context "$DIR" <target> "<path>" "<reason>"`          |
-| `validate`             | Validate JSONL                                                                                    | `task.py validate "$DIR"`                                          |
-| `list-context`         | View all entries                                                                                  | `task.py list-context "$DIR"`                                      |
-| `set-planning-profile` | Save all seven boolean planning answers and derive `lightweight` / `complex`                      | `task.py set-planning-profile "$DIR" <seven flags>`                |
-| `planning-status`      | Report profile, PRD, complex artifacts, interaction, database, and UI checks                      | `task.py planning-status "$DIR"`                                   |
-| `prototype-status`     | Show the current UI prototype entry, digest, and approval state                                   | `task.py prototype-status "$DIR"`                                  |
-| `approve-prototype`    | Bind explicit user approval to the current UI prototype digest                                    | `task.py approve-prototype "$DIR" "<approval-evidence>"`           |
-| `start`                | Set as current task; validates planning contract and opted-in UI prototype before any side effect | `task.py start "$DIR"`                                             |
-| `finish`               | Clear current task for this AI session/window                                                     | `task.py finish`                                                   |
-| `set-branch`           | Set branch name                                                                                   | `task.py set-branch "$DIR" "feature/xxx"`                          |
-| `set-base-branch`      | Set PR target branch                                                                              | `task.py set-base-branch "$DIR" "main"`                            |
-| `set-scope`            | Set scope                                                                                         | `task.py set-scope "$DIR" "auth"`                                  |
-| `add-subtask`          | Link child to parent                                                                              | `task.py add-subtask <parent-dir> <child-dir>`                     |
-| `remove-subtask`       | Unlink child from parent                                                                          | `task.py remove-subtask <parent-dir> <child-dir>`                  |
-| `archive`              | Archive task                                                                                      | `task.py archive <name>`                                           |
-| `list`                 | List active tasks                                                                                 | `task.py list [--mine] [--status <s>]`                             |
-| `list-archive`         | List archived tasks                                                                               | `task.py list-archive [YYYY-MM]`                                   |
+| Subcommand        | Purpose                                                                                           | Usage                                                              |
+| ----------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| `create`          | Create task (also seeds `implement.jsonl` / `check.jsonl` when a sub-agent platform is installed) | `task.py create "title" [--slug name] [-a assignee] [-p priority]` |
+| `add-context`     | Add context entry (primary way to populate jsonl after `create`)                                  | `task.py add-context "$DIR" <target> "<path>" "<reason>"`          |
+| `validate`        | Validate JSONL                                                                                    | `task.py validate "$DIR"`                                          |
+| `list-context`    | View all entries                                                                                  | `task.py list-context "$DIR"`                                      |
+| `start`           | Set as current task for this AI session/window                                                    | `task.py start "$DIR"`                                             |
+| `finish`          | Clear current task for this AI session/window                                                     | `task.py finish`                                                   |
+| `set-branch`      | Set branch name                                                                                   | `task.py set-branch "$DIR" "feature/xxx"`                          |
+| `set-base-branch` | Set PR target branch                                                                              | `task.py set-base-branch "$DIR" "main"`                            |
+| `set-scope`       | Set scope                                                                                         | `task.py set-scope "$DIR" "auth"`                                  |
+| `add-subtask`     | Link child to parent                                                                              | `task.py add-subtask <parent-dir> <child-dir>`                     |
+| `remove-subtask`  | Unlink child from parent                                                                          | `task.py remove-subtask <parent-dir> <child-dir>`                  |
+| `archive`         | Archive task                                                                                      | `task.py archive <name>`                                           |
+| `list`            | List active tasks                                                                                 | `task.py list [--mine] [--status <s>]`                             |
+| `list-archive`    | List archived tasks                                                                               | `task.py list-archive [YYYY-MM]`                                   |
 
 ### Python Scripts
 

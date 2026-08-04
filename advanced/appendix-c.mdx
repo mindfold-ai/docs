@@ -31,18 +31,7 @@ Matches `task.py create` in `.trellis/scripts/common/task_store.py`:
   "parent": "string", // Parent task directory name (null if top-level)
   "relatedFiles": [], // Related files list
   "notes": "string", // Notes ("" by default)
-  "meta": {
-    "planning_contract_version": "2",
-    "planning_tier": "pending", // pending | lightweight | complex
-    "ui": "false",
-    "interaction_change": "unknown",
-    "data_model_change": "unknown",
-    "public_contract_change": "unknown",
-    "cross_layer_change": "unknown",
-    "state_lifecycle_change": "unknown",
-    "security_compatibility_rollout_change": "unknown",
-    "technical_tradeoff": "unknown"
-  }
+  "meta": {} // Arbitrary per-project metadata (e.g. Linear issue id)
 }
 ```
 
@@ -55,8 +44,6 @@ Field order above matches `.trellis/scripts/common/task_store.py` verbatim — `
 </Note>
 
 Older tasks may be missing newer fields (e.g., pre-`package` tasks have no `"package"` key); `task.py` treats missing keys as null.
-
-`set-planning-profile` replaces all seven `unknown` values with `true` / `false` and derives `planning_tier`: all false is `lightweight`, any true is `complex`, and any unresolved answer remains `pending`. `meta.ui` is independent and must be the exact string `"true"` to enable the prototype gate; that opt-in also adds `prototype_manifest`. Historical tasks without `planning_contract_version: "2"` keep their existing start behavior.
 
 ### Parent-child vs `subtasks` — know the difference
 

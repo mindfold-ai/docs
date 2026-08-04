@@ -119,7 +119,7 @@ Final git log order: `<work commits from 3.4>` → `chore(task): archive ...` (o
 A typical task conversation:
 
 1. Describe the work in natural language → the AI classifies the request and asks for task-creation consent when Trellis is useful. After you agree, `trellis-brainstorm` creates the task and drafts `prd.md`.
-2. Once `prd.md` looks right, type `continue` → it records all seven planning-profile answers; the runtime derives `lightweight`, `complex`, or `pending` instead of relying on a free-form AI decision.
+2. Once `prd.md` looks right, type `continue` → it decides whether the task is lightweight or needs `design.md` and `implement.md`.
 3. After planning artifacts are reviewed, type `continue` → it starts the task and moves into implement/check. Sub-agent mode also curates `implement.jsonl` / `check.jsonl`; inline mode reads artifacts/specs directly.
 4. When the sub-agents finish, type `continue` → it routes to `trellis-update-spec`, and finally `finish-work`.
 
@@ -135,7 +135,7 @@ Turns an approved planning request into concrete artifacts:
 
 - Inspects code, tests, configs, docs, existing specs, and task history before asking questions.
 - Proposes a task name and slug, then creates the task via `task.py create` when needed.
-- Drafts and iterates `prd.md` with requirements and acceptance criteria.
+- Drafts and iterates `prd.md` with Goal, Requirements, and User-visible Outcomes.
 - Asks one question at a time, including the recommended answer.
 - For complex tasks, adds `design.md` and `implement.md` before implementation starts.
 
@@ -190,11 +190,10 @@ On Claude Code, Cursor, OpenCode, CodeBuddy, Droid, and Pi Agent, implementation
 ### 2.1 Task Lifecycle
 
 ```
-create → plan artifacts → UI prototype approval when enabled → optional jsonl context → start → implement/check → finish → archive
+create → plan artifacts → optional jsonl context → start → implement/check → finish → archive
 
 create:                task directory + task.json + default prd.md
 plan artifacts:        prd.md for every task; design.md + implement.md before complex work starts
-UI prototype approval: meta.ui=true tasks complete prototype/ and bind user approval to its current digest
 optional jsonl context: AI fills implement/check context when stable spec or research files must be injected
 start:                 marks the task in_progress for this AI session/window
 implement/check:       development and verification loop
@@ -220,8 +219,6 @@ TASK_DIR=$(./.trellis/scripts/task.py create "Add user login" \
 # Created files: task.json, prd.md
 # May also create implement.jsonl + check.jsonl on sub-agent-capable platforms
 ```
-
-Every standard task starts with planning contract v2 and `planning_tier=pending`. Use `set-planning-profile` to answer interaction, data model, public contract, cross-layer, lifecycle, security/compatibility/rollout, and technical-tradeoff questions. All `false` derives `lightweight`; any `true` derives `complex`. For UI work, add `--meta ui=true`; this creates `prototype/manifest.json` and a PRD User-visible Outcomes block for entry, preview, status, and digest.
 
 #### 2.2.2 Context Configuration
 
@@ -261,25 +258,6 @@ Every standard task starts with planning contract v2 and `planning_tier=pending`
 #### 2.2.3 Task Control
 
 ```bash
-# Save all seven answers together and derive the tier
-./.trellis/scripts/task.py set-planning-profile "$TASK_DIR" \
-  --interaction-change false \
-  --data-model-change false \
-  --public-contract-change true \
-  --cross-layer-change true \
-  --state-lifecycle-change false \
-  --security-compatibility-rollout-change false \
-  --technical-tradeoff true
-
-# Inspect the profile, PRD, complex artifacts, interaction, database, and UI checks
-./.trellis/scripts/task.py planning-status "$TASK_DIR"
-
-# Read the entry, freshly computed digest, and approval status
-./.trellis/scripts/task.py prototype-status "$TASK_DIR"
-
-# After the user reviews the latest UI prototype, bind approval to its digest
-./.trellis/scripts/task.py approve-prototype "$TASK_DIR" "approved in prototype review"
-
 # Set as the current task for this AI session/window
 # Writes .trellis/.runtime/sessions/<session-key>.json
 ./.trellis/scripts/task.py start "$TASK_DIR"
@@ -386,8 +364,6 @@ Fields get populated over time:
 - `status` → transitions `planning → in_progress → completed`
 - `completedAt` → set by `task.py archive` (archive does NOT write the commit hash back)
 - `parent` / `children` → set via `task.py create --parent` / `add-subtask`
-- `meta.ui` / `meta.prototype_manifest` → `create --meta ui=true` enables the UI prototype gate and writes the standard manifest path
-- `meta.planning_contract_version` / `meta.planning_tier` and seven profile fields → `set-planning-profile` derives `pending`, `lightweight`, or `complex`
 
 <Note>
   `worktree_path` / `commit` / `pr_url` are schema placeholders only; no 0.5 script populates them.
@@ -404,7 +380,7 @@ task.py start         →  flips planning to in_progress (other statuses preserv
 task.py archive       →  status: "completed" + move to archive/
 ```
 
-`planning` / `in_progress` / `completed` align with the three phases in `workflow.md`. Before rewriting `planning` to `in_progress`, `task.py start` validates planning contract v2: unresolved profiles, invalid PRD numbering/mapping, missing complex artifacts, incomplete interaction diagrams, and incomplete database designs are rejected without side effects. For `meta.ui=true`, it also rejects missing, pending, stale, escaping, or PRD-inconsistent prototype artifacts. Non-planning statuses (`in_progress`, `review`, `completed`) are left untouched, so re-starting a task in `review` doesn't clobber its state.
+`planning` / `in_progress` / `completed` align with the three phases in `workflow.md`. `task.py start` rewrites `planning` to `in_progress` automatically; non-planning statuses (`in_progress`, `review`, `completed`) are left untouched, so re-starting a task in `review` doesn't clobber its state. `task.py list --status` also accepts `review` as a filter — add any custom statuses you need by writing a matching `[workflow-state:<name>]` block in `workflow.md`.
 
 ### 2.4 JSONL Context Configuration in Practice
 
@@ -782,3 +758,10 @@ The bar: specific, actionable, with a code example, with a stated _why_, and —
 `trellis init` also creates a bootstrap task (`00-bootstrap-guidelines`). In the first Trellis session, the AI recognizes it, runs `trellis-research` across your code, and fills the empty templates under `frontend/` / `backend/` / `guides/` with specs grounded in your actual project — tech stack, conventions, directory shape, all pulled from the code.
 
 ---
+<!-- prd-contract:START -->
+
+## PRD before implementation
+
+Use the fixed Goal, Requirements, and User-visible Outcomes contract before `task.py start`. A UI prototype remains `pending_user_approval` until the user explicitly approves it.
+
+<!-- prd-contract:END -->
