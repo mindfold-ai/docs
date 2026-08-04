@@ -117,12 +117,12 @@ Hook 脚本只负责解析，不保存 breadcrumb 文案副本。缺少匹配 bl
 
 默认状态：
 
-| Status        | 写入者            | 说明                                                                                                         |
-| ------------- | ----------------- | ------------------------------------------------------------------------------------------------------------ |
-| `no_task`     | Hook 合成         | 当前 session 没有 active task pointer。                                                                      |
-| `planning`    | `task.py create`  | 需求和 planning artifact 阶段；轻量任务可以只有 PRD，复杂任务在 start 前需要 `design.md` 和 `implement.md`。 |
-| `in_progress` | `task.py start`   | 实现、验收、收尾阶段。                                                                                       |
-| `completed`   | `task.py archive` | 归档前瞬间写入；正常流程里不会作为 live breadcrumb 出现。                                                    |
+| Status        | 写入者            | 说明                                                                                                                         |
+| ------------- | ----------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `no_task`     | Hook 合成         | 当前 session 没有 active task pointer。                                                                                      |
+| `planning`    | `task.py create`  | Planning artifact 阶段；复杂任务需要 `design.md` 和 `implement.md`，`meta.ui=true` 的任务还需要完整且已批准的 `prototype/`。 |
+| `in_progress` | `task.py start`   | 实现、验收、收尾阶段。                                                                                                       |
+| `completed`   | `task.py archive` | 归档前瞬间写入；正常流程里不会作为 live breadcrumb 出现。                                                                    |
 
 `task.py create` 会尽量设置当前 session 的 active-task pointer，所以 brainstorm 和 JSONL 整理阶段可以看到 `planning`。
 
@@ -138,7 +138,8 @@ Hook 脚本只负责解析，不保存 breadcrumb 文案副本。缺少匹配 bl
 ├── implement.md
 ├── implement.jsonl
 ├── check.jsonl
-└── research/
+├── research/
+└── prototype/          # 用户界面任务：manifest、入口、预览、资源
 ```
 
 关键文件：
@@ -146,19 +147,20 @@ Hook 脚本只负责解析，不保存 breadcrumb 文案副本。缺少匹配 bl
 | 文件              | 作用                                                                |
 | ----------------- | ------------------------------------------------------------------- |
 | `task.json`       | 状态、优先级、负责人、分支、PR URL、父子任务关系和扩展元数据。      |
-| `prd.md`          | 目标、需求和用户可见结果；技术设计、执行和证据分别进入配套产物。     |
+| `prd.md`          | 固定顺序的目标、需求和用户可见结果；用户可见结果使用 checklist。    |
 | `design.md`       | 复杂任务的技术设计：边界、contract、数据流、兼容性、取舍。          |
 | `implement.md`    | 复杂任务的执行计划：有序 checklist、验证命令、review gate、回滚点。 |
 | `implement.jsonl` | 实现上下文使用的 spec / research manifest。                         |
 | `check.jsonl`     | Review 和验证上下文使用的 spec / research manifest。                |
 | `research/`       | `trellis-research` 或规划流程写入的调研产物。                       |
+| `prototype/`      | 用户界面原型合同和绑定摘要的批准；仅 `meta.ui=true` 时创建。        |
 
 Task lifecycle hook 是命令事件，不是通用 status watcher：
 
 | Lifecycle event | 触发时机                              | 含义                                                        |
 | --------------- | ------------------------------------- | ----------------------------------------------------------- |
 | `after_create`  | `task.py create` 结束                 | 任务目录已经存在。                                          |
-| `after_start`   | `task.py start` 结束                  | 任务进入 `in_progress`。                                    |
+| `after_start`   | `task.py start` 结束                  | 任务进入 `in_progress`；用户界面原型门禁失败时不触发。      |
 | `after_finish`  | `task.py finish` 清掉 session pointer | 当前 AI session 脱离该任务；任务可能还在其他 session 继续。 |
 | `after_archive` | `task.py archive` 结束                | 任务已归档；外部系统的 done 同步应该用这个事件。            |
 
@@ -278,10 +280,3 @@ Trellis 把实现、工作 commit、收尾记账分开：
 | 改 hook 行为                                   | 平台 hook settings 加 `.trellis/scripts/` 下的 hook 实现                                     |
 | 改 implement / check agent 行为                | 平台 agent 文件和任务 JSONL 上下文规则                                                       |
 | 增加团队自己的编码规则                         | `.trellis/spec/` 或项目本地 skill                                                            |
-<!-- prd-contract:START -->
-
-## PRD 合同边界
-
-任务系统将产品意图放在 PRD 的三个固定章节中，并将技术设计、执行和证据放在各自的产物中。
-
-<!-- prd-contract:END -->

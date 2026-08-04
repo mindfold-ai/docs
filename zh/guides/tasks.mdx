@@ -24,7 +24,8 @@ description: '用任务系统追踪工作'
 ├── prd.md              # 需求
 ├── implement.jsonl     # implement agent 的上下文
 ├── check.jsonl         # check agent 的上下文
-└── debug.jsonl         # debug agent 的上下文
+├── research/           # 可持久化的规划调研
+└── prototype/          # 用户界面任务：manifest、入口、预览和资源
 ```
 
 目录名格式：`MM-DD-简短描述-负责人`。
@@ -37,40 +38,54 @@ description: '用任务系统追踪工作'
 python3 .trellis/scripts/task.py create "user-auth" --assignee taosu
 ```
 
-这会创建任务目录和默认文件。然后编辑 `prd.md`，按固定的目标、需求和用户可见结果组织内容。
+这会创建规划合同 v2 Task，初始层级为 `pending`。编辑 `prd.md` 后，用 `task.py set-planning-profile` 一次回答七项规划画像：全部为 `false` 推导为 `lightweight`；任一为 `true` 推导为 `complex`，并要求 `design.md` 与 `implement.md`。
+
+用户界面任务必须显式启用原型合同：
+
+```bash
+python3 .trellis/scripts/task.py create "user-auth-ui" --assignee taosu --meta ui=true
+```
+
+完成 `prototype/manifest.json` 声明的入口和预览。PRD“用户可见结果”的管理块必须展示入口、预览、状态和摘要。`task.py prototype-status <task>` 同时报告批准状态与 PRD 引用是否一致。用户查看该版本后，`task.py approve-prototype <task> "<approval-evidence>"` 记录批准并同步 PRD 管理块。
 
 ### prd.md
 
-写用户需要什么以及能验证什么。使用固定的目标、需求和用户可见结果章节；技术设计、执行和证据放入配套产物。
+写清产品变化，让读者不看技术设计也能理解。固定保持“目标 → 需求 → 用户可见结果”；需求只建立实际发生的变更类型分组，使用 `R1` / `R1.1` 编号；检查清单结果使用 `O1` 编号并映射需求。
 
 ```markdown
 # 用户认证
 
 ## 目标
 
-用户可以用邮箱和密码注册、登录。
+1. 用户可以用邮箱和密码注册、登录。
 
 ## 需求
 
-- 用邮箱、密码、显示名注册
-- 登录前需要验证邮箱
-- 登录返回 JWT token
-- Token 7 天过期
-- 通过邮件重置密码
+### R1 新增
 
-## API 接口
+- **R1.1 创建账号**：用户可使用邮箱、密码和显示名注册。
+- **R1.2 验证邮箱**：用户首次登录前必须验证邮箱。
+- **R1.3 找回密码**：用户可通过邮件发起并完成密码重置。
 
-- POST /auth/signup
-- POST /auth/login
-- POST /auth/verify-email
-- POST /auth/forgot-password
-- POST /auth/reset-password
+### R2 保持不变
+
+- **R2.1 会话策略**：现有会话过期行为保持不变。
+
+## 用户可见结果
+
+- [ ] **O1（R1.1、R1.2）** 新用户可以创建并验证账号，然后登录。
+- [ ] **O2（R1.3）** 用户可以通过邮件找回账号访问权。
+- [ ] **O3（R2.1）** 现有用户的会话时长保持不变。
 
 ## 不在范围内
 
 - 社交登录（Google、GitHub）
 - 两步验证
 ```
+
+### 数据库变化的 design.md
+
+当 `data_model_change=true` 时，`design.md` 必须包含数据模型章节、可执行的 `CREATE TABLE` / `ALTER TABLE` DDL、表与字段说明数据字典、约束/关系、迁移和回滚。每张变更表、DDL 中每个字段都要有业务备注：支持时使用原生 `COMMENT` / `COMMENT ON`；SQLite 一类方言使用 SQL 注释加数据字典。Mermaid `erDiagram` 保持可选。
 
 ### 上下文文件（JSONL）
 
@@ -86,6 +101,8 @@ python3 .trellis/scripts/task.py create "user-auth" --assignee taosu
 不同 agent 可以有不同的上下文文件。按需编辑 `implement.jsonl`、`check.jsonl` 等。
 
 ## 开始做任务
+
+`task.py start` 先校验 v2 规划画像以及 PRD 编号/映射。复杂 Task 还必须有 `design.md` 和 `implement.md`；交互变化必须提供文字标记且标红变化流程的 Mermaid 图；数据模型变化必须有 DDL 与表/字段备注。UI Task 随后还会校验原型文件、绑定摘要的批准和 PRD 管理块。任何失败都发生在状态、会话指针或生命周期 hook 改变之前。
 
 设置当前任务：
 
@@ -133,16 +150,10 @@ python3 .trellis/scripts/task.py start other-task-id
 
 1. 创建任务：`task.py create`
 2. 编辑 `prd.md` 写需求
-3. 设置上下文文件（JSONL）
-4. 设为当前：`task.py start`
-5. 在 Claude Code 会话里工作
-6. 归档：`task.py archive <id>`
+3. 用户界面任务完成 `prototype/`，检查 `task.py prototype-status`，并在用户查看后运行 `task.py approve-prototype`
+4. 设置上下文文件（JSONL）
+5. 设为当前：`task.py start`
+6. 在 Claude Code 会话里工作
+7. 归档：`task.py archive <id>`
 
 任务系统把上下文组织好，让 AI 知道该关注什么。
-<!-- prd-contract:START -->
-
-## PRD 合同
-
-新任务 PRD 按顺序使用“目标”“需求”“用户可见结果”。目标为有序列表，结果为可核验检查清单。技术设计进入 `design.md`，执行进入 `implement.md`，源码证据进入 `research/`；UI 任务必须在开发前获得用户的原型确认。
-
-<!-- prd-contract:END -->

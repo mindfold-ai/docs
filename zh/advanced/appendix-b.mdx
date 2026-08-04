@@ -53,22 +53,26 @@ Trellis 只保留很少的会话边界命令，其他都是 auto-trigger skill �
 
 ### `task.py` 子命令
 
-| 子命令            | 用途                                                                       | 用法                                                               |
-| ----------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| `create`          | 创建任务（检测到 sub-agent 平台时 seed `implement.jsonl` / `check.jsonl`） | `task.py create "title" [--slug name] [-a assignee] [-p priority]` |
-| `add-context`     | 追加上下文条目（create 之后填 jsonl 的主要入口）                           | `task.py add-context "$DIR" <target> "<path>" "<reason>"`          |
-| `validate`        | 校验 JSONL                                                                 | `task.py validate "$DIR"`                                          |
-| `list-context`    | 查看所有条目                                                               | `task.py list-context "$DIR"`                                      |
-| `start`           | 置为当前 AI 会话/窗口的任务                                                | `task.py start "$DIR"`                                             |
-| `finish`          | 清除当前 AI 会话/窗口的任务                                                | `task.py finish`                                                   |
-| `set-branch`      | 设置分支名                                                                 | `task.py set-branch "$DIR" "feature/xxx"`                          |
-| `set-base-branch` | 设置 PR 目标分支                                                           | `task.py set-base-branch "$DIR" "main"`                            |
-| `set-scope`       | 设置范围                                                                   | `task.py set-scope "$DIR" "auth"`                                  |
-| `add-subtask`     | 链接子任务到父任务                                                         | `task.py add-subtask <父任务目录> <子任务目录>`                    |
-| `remove-subtask`  | 解除子任务关联                                                             | `task.py remove-subtask <父任务目录> <子任务目录>`                 |
-| `archive`         | 归档任务                                                                   | `task.py archive <name>`                                           |
-| `list`            | 列出活跃任务                                                               | `task.py list [--mine] [--status <s>]`                             |
-| `list-archive`    | 列出归档任务                                                               | `task.py list-archive [YYYY-MM]`                                   |
+| 子命令                 | 用途                                                                       | 用法                                                               |
+| ---------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| `create`               | 创建任务（检测到 sub-agent 平台时 seed `implement.jsonl` / `check.jsonl`） | `task.py create "title" [--slug name] [-a assignee] [-p priority]` |
+| `add-context`          | 追加上下文条目（create 之后填 jsonl 的主要入口）                           | `task.py add-context "$DIR" <target> "<path>" "<reason>"`          |
+| `validate`             | 校验 JSONL                                                                 | `task.py validate "$DIR"`                                          |
+| `list-context`         | 查看所有条目                                                               | `task.py list-context "$DIR"`                                      |
+| `set-planning-profile` | 一次保存七项布尔规划画像并推导 `lightweight` / `complex`                   | `task.py set-planning-profile "$DIR" <七项参数>`                   |
+| `planning-status`      | 报告画像、PRD、复杂产物、交互、数据库和 UI 检查                            | `task.py planning-status "$DIR"`                                   |
+| `prototype-status`     | 显示当前用户界面原型入口、摘要和批准状态                                   | `task.py prototype-status "$DIR"`                                  |
+| `approve-prototype`    | 把明确的用户批准绑定到当前用户界面原型摘要                                 | `task.py approve-prototype "$DIR" "<approval-evidence>"`           |
+| `start`                | 置为当前任务；任何副作用前先校验规划合同和已启用的 UI prototype            | `task.py start "$DIR"`                                             |
+| `finish`               | 清除当前 AI 会话/窗口的任务                                                | `task.py finish`                                                   |
+| `set-branch`           | 设置分支名                                                                 | `task.py set-branch "$DIR" "feature/xxx"`                          |
+| `set-base-branch`      | 设置 PR 目标分支                                                           | `task.py set-base-branch "$DIR" "main"`                            |
+| `set-scope`            | 设置范围                                                                   | `task.py set-scope "$DIR" "auth"`                                  |
+| `add-subtask`          | 链接子任务到父任务                                                         | `task.py add-subtask <父任务目录> <子任务目录>`                    |
+| `remove-subtask`       | 解除子任务关联                                                             | `task.py remove-subtask <父任务目录> <子任务目录>`                 |
+| `archive`              | 归档任务                                                                   | `task.py archive <name>`                                           |
+| `list`                 | 列出活跃任务                                                               | `task.py list [--mine] [--status <s>]`                             |
+| `list-archive`         | 列出归档任务                                                               | `task.py list-archive [YYYY-MM]`                                   |
 
 ### Python 脚本
 

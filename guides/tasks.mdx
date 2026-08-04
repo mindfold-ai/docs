@@ -24,7 +24,8 @@ Tasks live in `.trellis/tasks/`. Each task is a directory:
 ├── prd.md              # Requirements
 ├── implement.jsonl     # Context for implement agent
 ├── check.jsonl         # Context for check agent
-└── debug.jsonl         # Context for debug agent
+├── research/           # Durable planning research
+└── prototype/          # UI tasks: manifest, entry, preview, and assets
 ```
 
 The directory name follows the pattern: `MM-DD-slug-assignee`.
@@ -37,40 +38,54 @@ Use the task script:
 python3 .trellis/scripts/task.py create "user-auth" --assignee taosu
 ```
 
-This creates the task directory with default files. Then edit `prd.md` to define requirements.
+This creates a planning-contract v2 task in `pending`. Edit `prd.md`, then answer all seven planning profile questions with `task.py set-planning-profile`. All `false` derives `lightweight`; any `true` derives `complex` and requires `design.md` plus `implement.md`.
+
+For a UI task, opt in explicitly so Trellis creates the prototype contract:
+
+```bash
+python3 .trellis/scripts/task.py create "user-auth-ui" --assignee taosu --meta ui=true
+```
+
+Complete the entry and preview declared by `prototype/manifest.json`. The managed block in PRD User-visible Outcomes must show that entry, preview, status, and digest. `task.py prototype-status <task>` reports both approval and PRD-reference consistency. After the user reviews that version, `task.py approve-prototype <task> "<approval-evidence>"` records the approval and synchronizes the PRD block.
 
 ### prd.md
 
-Write what users need and what they can verify. Use the fixed Goal, Requirements, and User-visible Outcomes sections; keep technical design, execution, and evidence in their companion artifacts.
+Write the product change so a reader can understand it without the technical design. Keep Goal, Requirements, and User-visible Outcomes in that order. Group only change types that occur; number groups and items as `R1` / `R1.1`; number checklist outcomes as `O1` and map them to requirements.
 
 ```markdown
 # User Authentication
 
 ## Goal
 
-Users can sign up and log in with email/password.
+1. Users can sign up and log in with email/password.
 
 ## Requirements
 
-- Sign up with email, password, display name
-- Email verification required before login
-- Login returns JWT token
-- Token expires after 7 days
-- Password reset via email
+### R1 Add
 
-## API Endpoints
+- **R1.1 Account creation**: users sign up with email, password, and display name.
+- **R1.2 Email verification**: users verify email before their first login.
+- **R1.3 Password recovery**: users can request and complete a password reset.
 
-- POST /auth/signup
-- POST /auth/login
-- POST /auth/verify-email
-- POST /auth/forgot-password
-- POST /auth/reset-password
+### R2 Preserve
+
+- **R2.1 Session policy**: existing session expiration behavior stays unchanged.
+
+## User-visible Outcomes
+
+- [ ] **O1 (R1.1, R1.2)** A new user can create and verify an account, then log in.
+- [ ] **O2 (R1.3)** A user can recover access through email.
+- [ ] **O3 (R2.1)** Existing users keep the same session lifetime.
 
 ## Out of scope
 
 - Social login (Google, GitHub)
 - Two-factor authentication
 ```
+
+### design.md for database changes
+
+When `data_model_change=true`, `design.md` must include a Data Model section, executable `CREATE TABLE` / `ALTER TABLE` DDL, a Table and Field Descriptions data dictionary, constraints/relationships, migration, and rollback. Every changed table and every DDL field needs a business comment: use native `COMMENT` / `COMMENT ON` where supported, or SQL comments plus the data dictionary for SQLite-like dialects. A Mermaid `erDiagram` is optional.
 
 ### Context files (JSONL)
 
@@ -86,6 +101,8 @@ These tell agents which files to read:
 Different agents can have different context. Edit `implement.jsonl`, `check.jsonl`, etc. as needed.
 
 ## Working on a task
+
+`task.py start` first validates the v2 planning profile and PRD numbering/mapping. Complex tasks also need `design.md` and `implement.md`; interaction changes need a labeled red-highlighted Mermaid change flow; data-model changes need DDL plus table/field comments. For UI tasks it then verifies the prototype files, content-bound approval, and PRD managed block. Any failure occurs before status, session pointer, or lifecycle hooks change.
 
 Set the current task:
 
@@ -133,16 +150,10 @@ Typical flow:
 
 1. Create task: `task.py create`
 2. Edit `prd.md` with requirements
-3. Set up context files (JSONL)
-4. Set as current: `task.py start`
-5. Work in Claude Code sessions
-6. Archive when complete: `task.py archive <id>`
+3. For UI tasks, complete `prototype/`, inspect `task.py prototype-status`, and run `task.py approve-prototype` after user review
+4. Set up context files (JSONL)
+5. Set as current: `task.py start`
+6. Work in Claude Code sessions
+7. Archive when complete: `task.py archive <id>`
 
 The task system keeps context organized so the AI knows what to focus on.
-<!-- prd-contract:START -->
-
-## PRD contract
-
-New task PRDs use `Goal`, `Requirements`, and `User-visible Outcomes` in that order. Goals are ordered lists and outcomes are verifiable checklists. Keep technical design in `design.md`, execution in `implement.md`, and source evidence in `research/`. UI tasks require explicit prototype approval before implementation starts.
-
-<!-- prd-contract:END -->

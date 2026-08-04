@@ -111,7 +111,9 @@ python3 ./.trellis/scripts/task.py create "<title>" --slug <name>
 ├── task.json
 ├── prd.md
 ├── implement.jsonl
-└── check.jsonl
+├── check.jsonl
+├── research/
+└── prototype/          # 使用 --meta ui=true 时创建
 ```
 
 `prd.md` 总是从默认模板创建。支持 sub-agent 的平台可能会 seed
@@ -126,20 +128,28 @@ session 的 active-task pointer，所以不用等 `task.py start`，下一轮就
 
 Planning 把用户请求转换成 implementation 和 review 可以信任的文件。
 
-| Artifact          | 什么时候需要           | 作用                                                       |
-| ----------------- | ---------------------- | ---------------------------------------------------------- |
-| `prd.md`          | 每个任务               | 目标、需求、用户可见结果；技术设计、执行和证据分别进入配套产物。 |
-| `design.md`       | 复杂任务               | 技术设计：边界、contract、数据流、兼容性、取舍、回滚方式。 |
-| `implement.md`    | 复杂任务               | 执行计划：有序 checklist、验证命令、review gate、回滚点。  |
-| `research/*.md`   | 需要调研时             | Planning 阶段发现的持久事实。                              |
-| `implement.jsonl` | 需要上下文 manifest 时 | 实现阶段的 spec/research 文件。                            |
-| `check.jsonl`     | 需要上下文 manifest 时 | Review 和验证阶段的 spec/research 文件。                   |
+| Artifact          | 什么时候需要           | 作用                                                             |
+| ----------------- | ---------------------- | ---------------------------------------------------------------- |
+| `prd.md`          | 每个任务               | 固定顺序的目标、需求和用户可见结果；用户可见结果使用 checklist。 |
+| `design.md`       | 复杂任务               | 技术设计：边界、contract、数据流、兼容性、取舍、回滚方式。       |
+| `implement.md`    | 复杂任务               | 执行计划：有序 checklist、验证命令、review gate、回滚点。        |
+| `research/*.md`   | 需要调研时             | Planning 阶段发现的持久事实。                                    |
+| `prototype/`      | 用户界面任务           | Manifest、可运行入口、静态预览、可选资源和绑定摘要的批准。       |
+| `implement.jsonl` | 需要上下文 manifest 时 | 实现阶段的 spec/research 文件。                                  |
+| `check.jsonl`     | 需要上下文 manifest 时 | Review 和验证阶段的 spec/research 文件。                         |
 
 `implement.md` 不替代 `implement.jsonl`。Markdown 文件是人可读的计划；JSONL
 文件是稳定上下文文件的 manifest。
 
 轻量任务可以只有 PRD。复杂任务在开始前需要 `prd.md`、`design.md`、
 `implement.md`。
+
+用户界面任务使用 `--meta ui=true` 创建。Trellis 会建立 `prototype/manifest.json`；planning 阶段完成其中声明的入口和预览，读取当前摘要和状态，向用户展示该版本，再用以下命令记录批准：
+
+```bash
+python3 ./.trellis/scripts/task.py prototype-status <task-dir>
+python3 ./.trellis/scripts/task.py approve-prototype <task-dir> "<approval-evidence>"
+```
 
 ## 6. Context manifest 保持窄范围
 
@@ -170,7 +180,7 @@ Artifact review 之后，Trellis 激活任务：
 python3 ./.trellis/scripts/task.py start <task-dir>
 ```
 
-这个命令把 `task.json.status` 从 `planning` 改成 `in_progress`。
+这个命令把 `task.json.status` 从 `planning` 改成 `in_progress`。对于 `meta.ui=true`，命令会先校验原型目录、目录内路径、当前摘要和明确批准；失败不会改变状态、活动指针，也不会触发 `after_start` hook。
 
 下一轮 prompt 里，workflow-state hook 会注入匹配的
 `[workflow-state:in_progress]` block。这个 block 覆盖实现、check、spec
@@ -271,10 +281,3 @@ Phase 3.4 里，主会话会：
 
 下一次 AI 会话会重新读取仓库状态。它不需要上一段聊天记录，也能知道任务是什么、
 哪些 spec 适用、下一步该执行哪个 workflow step。
-<!-- prd-contract:START -->
-
-## 规划产物边界
-
-PRD 是人读合同，顺序为“目标”“需求”“用户可见结果”；技术设计、执行命令和源码证据分别进入 `design.md`、`implement.md`、`research/`。
-
-<!-- prd-contract:END -->
