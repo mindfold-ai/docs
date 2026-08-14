@@ -1,0 +1,36 @@
+---
+title: 'v0.6.15'
+description: '2026-08-14'
+---
+
+新增 DeepSeek Harness，成为第 22 个支持的平台。
+
+## 新增平台
+
+### DeepSeek Harness
+
+```bash
+trellis init --dsh
+```
+
+共享的工作流和内置 skill 写入 `.agents/skills/`，用户可调用的入口 skill
+（`trellis-start`、`trellis-continue`、`trellis-finish-work`）写入
+`.dsh/skills/`，也就是 dsh 自己优先级最高的项目 skill 目录。操作指南放在
+`.dsh/DSH.md`。
+
+dsh 会自动发现这两个 skill 目录，并通过它的 skill-loader 工具按名字加载，
+不需要手动注册。默认的 web 和 headless 配置没有 session-start hook，所以
+`trellis-start` 是你手动调用的 skill，不会自动触发。
+
+dsh 没有项目级的 sub-agent 定义面，因此 research、implement、check 三个阶段
+都在主会话里直接执行，不会派给 sub-agent。支持 sub-agent 派发的平台数仍然
+是 18 个。
+
+## 升级
+
+```bash
+npm install -g @mindfoldhq/trellis@latest
+trellis update
+```
+
+不需要 `--migrate`。

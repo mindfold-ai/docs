@@ -1,0 +1,37 @@
+---
+title: 'v0.6.15'
+description: '2026-08-14'
+---
+
+Adds DeepSeek Harness as the 22nd supported platform.
+
+## New Platform
+
+### DeepSeek Harness
+
+```bash
+trellis init --dsh
+```
+
+Writes the shared workflow and bundled skills to `.agents/skills/`, and the
+user-invocable entry skills (`trellis-start`, `trellis-continue`,
+`trellis-finish-work`) to `.dsh/skills/`, which is dsh's own highest-rank
+project skill root. An operator guide lands at `.dsh/DSH.md`.
+
+dsh discovers both skill roots natively and loads skills by name through its
+skill-loader tool, so nothing needs to be registered by hand. The default web
+and headless profiles ship no session-start hook, so `trellis-start` stays a
+skill you invoke rather than something that fires automatically.
+
+dsh exposes no project-level sub-agent surface, so the research, implement and
+check phases run inline in the main session instead of being dispatched to
+sub-agents. The platform count for sub-agent dispatch stays at 18.
+
+## Upgrade
+
+```bash
+npm install -g @mindfoldhq/trellis@latest
+trellis update
+```
+
+No `--migrate` required.
