@@ -7,15 +7,17 @@ title: 'Custom Sub-agents'
 Trellis ships three sub-agents (`trellis-implement`, `trellis-check`, `trellis-research`). You can modify them or add your own. This chapter walks through the Claude Code format as the main example, then lists the frontmatter differences on other platforms.
 
 <Note>
-  Sub-agents ship on 18 of 22 configured platforms: Claude Code, Cursor, OpenCode, Codex, Kiro,
+  Sub-agents ship on 19 of 22 configured platforms: Claude Code, Cursor, OpenCode, Codex, Kiro,
   Gemini CLI, Qoder, CodeBuddy, Copilot, Droid, Pi Agent, Oh My Pi, Reasonix, ZCode, Trae, Grok
-  Build, Kimi Code, Snow CLI. The agent file format varies by platform (Markdown / TOML / JSON), and
-  on platforms without a `PreToolUse` hook or extension equivalent the sub-agents read their JSONL
-  manifest plus `prd.md`, `design.md` if present, and `implement.md` if present via a pull-based
-  prelude instead of having that context injected. Codex can also run in inline mode, where the main
-  session reads the same artifacts through skills. Kilo, Antigravity, and Devin do not expose a
-  sub-agent primitive — the implement / check work runs inline in the main session, and DeepSeek
-  Harness does the same.
+  Build, Kimi Code, Snow CLI, DeepSeek Harness. The agent file format varies by platform (Markdown /
+  TOML / JSON), and on platforms without a `PreToolUse` hook or extension equivalent the sub-agents
+  read their JSONL manifest plus `prd.md`, `design.md` if present, and `implement.md` if present via
+  a pull-based prelude instead of having that context injected. Codex can also run in inline mode,
+  where the main session reads the same artifacts through skills. DeepSeek Harness dispatches native
+  continuable `subagent` children and gives each child one non-user-invocable `trellis-agent-*` role
+  skill; the optional `dsh-trellis` companion provides event-driven `trellis_wait`, with an initial
+  foreground dispatch fallback when the plugin is absent. Kilo, Antigravity, and Devin do not expose
+  a sub-agent primitive — their implement / check work runs inline in the main session.
 </Note>
 
 ### Sub-agent definition (Claude Code example)

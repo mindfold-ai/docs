@@ -7,13 +7,16 @@ title: '定制 Sub-agent'
 Trellis 原生带有 3 个 sub-agent（`trellis-implement`、`trellis-check`、`trellis-research`）。你可以修改它们或新增自己的。本章以 Claude Code 格式作为主要例子，再列出其他平台的 frontmatter 差异。
 
 <Note>
-  Sub-agent 在 22 个配置平台里有 18 个可用：Claude Code、Cursor、OpenCode、Codex、Kiro、Gemini
+  Sub-agent 在 22 个配置平台里有 19 个可用：Claude Code、Cursor、OpenCode、Codex、Kiro、Gemini
   CLI、Qoder、CodeBuddy、Copilot、Droid、Pi Agent、Oh My Pi、Reasonix、ZCode、Trae、Grok Build、
-  Kimi Code、Snow CLI。agent 文件格式按平台分 Markdown / TOML / JSON；没有 sub-agent `PreToolUse`
-  hook 或 extension 等价机制的平台，sub-agent 自己通过 pull-based prelude 读取自己的 JSONL
-  manifest、`prd.md`、存在时的 `design.md`、存在时的 `implement.md`，不靠 hook 注入。Codex 也可以跑
-  inline 模式，此时主会话通过 skill 读取同一批 artifact。Kilo、Antigravity、Devin 没有 sub-agent
-  原语——implement / check 在主会话里内联完成，DeepSeek Harness 也是同样情况。
+  Kimi Code、Snow CLI、DeepSeek Harness。agent 文件格式按平台分 Markdown / TOML / JSON；没有
+  sub-agent `PreToolUse` hook 或 extension 等价机制的平台，sub-agent 自己通过 pull-based prelude
+  读取自己的 JSONL manifest、`prd.md`、存在时的 `design.md`、存在时的 `implement.md`，不靠 hook
+  注入。Codex 也可以跑 inline 模式，此时主会话通过 skill 读取同一批 artifact。DeepSeek Harness
+  会派发原生、可续接的 `subagent` 子代理，每个子代理只加载一个不可由用户调用的 `trellis-agent-*`
+  角色 skill；可选的 `dsh-trellis` 伴侣插件提供事件驱动的
+  `trellis_wait`，未安装插件时则从一开始就在前台派发。 Kilo、Antigravity、Devin 没有 sub-agent
+  原语——它们的 implement / check 在主会话里内联完成。
 </Note>
 
 ### Sub-agent 定义（Claude Code 示例）
