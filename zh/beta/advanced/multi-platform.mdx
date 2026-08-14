@@ -280,7 +280,11 @@ Trellis 还原生带有上面能力矩阵之外几个平台的配置器：
 - **Grok Build**（`--grok`）：写 `.grok/skills/`、`.grok/commands/`、`.grok/agents/`。sub-agent 通过 `spawn_subagent` 派发。没有 hook 集成。
 - **Kimi Code**（`--kimi`）：把 skill 写到 `.kimi-code/skills/` 和共享的 `.agents/skills/` 层；入口命令调用形式是 `/skill:trellis-{name}`。没有项目级 hook（Kimi 只支持用户级 `~/.kimi-code/config.toml`）。
 - **Snow CLI**（`--snow`）：写 `.snow/skills/`、`.snow/commands/`、`.snow/agents/`、`.snow/hooks/`（Python hook 为 session / user / sub-agent 事件输出 `additionalContext` JSON）。
-- **DeepSeek Harness**（`--dsh`）：写入 `.dsh/skills/`（用户可调用的入口 skill）以及共享的 `.agents/skills/` 层；agent 通过 skill-loader 工具按名字加载 skill。无 hook 集成，也没有项目级 sub-agent 定义面，因此 implement / check 阶段在主会话内联执行。
+- **DeepSeek Harness**（`--dsh`）：把共享工作流写到 `.agents/skills/`，把用户可调用的入口 skill 写到 `.dsh/skills/trellis-*`，并把无名称冲突、不可由用户调用的子代理角色写到 `.dsh/skills/trellis-agent-*`。主会话派发 DSH 原生、可续接的 `subagent`，每个子代理只加载一个角色 skill，并主动拉取任务上下文。若可选的 [`dsh-trellis`](https://github.com/SajoLuo/dsh-trellis) 伴侣插件提供 `trellis_wait`，依赖阶段会等待原生 settlement 事件，期间可继续独立工作；未安装插件时，子代理从一开始就在前台派发。两条路径都不使用 shell sleep 或轮询，`trellis init --dsh` 也不会安装 profile 插件。
+
+  DSH 还会继承启动进程的普通环境变量。从已有活跃 Trellis 会话中启动 DSH 时，外层的 `TRELLIS_CONTEXT_ID` 原本会覆盖 DSH 的原生会话 ID。DSH 会为每个受管 shell 重建完整的 `DSH_*` 命名空间，因此即使未安装插件，beta 适配也会把同时存在的 `DSH_SHELL=1` 与 `DSH_SESSION_ID` 视为当前 DSH 身份，并优先于继承的通用 override 解析。可选伴侣插件还会在需要转发不同于 shell 自身 session ID 的子代理身份时，为每次执行发布可信的 `DSH_TRELLIS_CONTEXT_ID`。
+
+  每次 `dsh --profile headless` 调用都会创建新的 DSH 会话。请在同一会话中完成任务流程，或显式续接返回的 session id；多个独立 headless 调用不会自动共享 active-task 指针。
 
 除了 22 个已配置平台，Trellis 还能被任何遵循 `.agents/skills/` 约定（[agentskills.io](https://agentskills.io) 规范）的 AI 编码 agent 直接使用。Codex 的 skill 就写在这个目录下，这些文件也能被该生态的其他 agent（Amp、Cline、Deep Agents、Firebender、Warp 等）直接读取。这些平台上你通过 `.trellis/` 核心加上各自 agent 读取的 prelude 文件来管理 Trellis。
 
