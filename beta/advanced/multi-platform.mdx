@@ -292,6 +292,8 @@ Trellis also ships configurators for platforms not covered by the capability mat
 
   DSH also inherits ordinary environment variables from its launcher. When it is started inside an already-active Trellis session, an outer `TRELLIS_CONTEXT_ID` would otherwise override DSH's native session id. The optional companion publishes a trusted, per-execution `DSH_TRELLIS_CONTEXT_ID` that the beta adapter resolves first. Without the plugin, unset `TRELLIS_CONTEXT_ID` before launching DSH from another Trellis-enabled AI host.
 
+  Each `dsh --profile headless` invocation creates a fresh DSH session. Keep a task flow in one session or explicitly resume its returned session id; separate headless invocations do not share an active-task pointer automatically.
+
 Beyond the 22 configured platforms, Trellis can be consumed by any AI coding agent that follows the `.agents/skills/` convention (the [agentskills.io](https://agentskills.io) standard). Codex writes its skills there, and the files are directly usable by other agents in that ecosystem (Amp, Cline, Deep Agents, Firebender, Warp, and more). On those platforms you manage Trellis through the `.trellis/` core plus whatever prelude file the agent reads.
 
 ### Operating Systems

@@ -284,6 +284,8 @@ Trellis 还原生带有上面能力矩阵之外几个平台的配置器：
 
   DSH 还会继承启动进程的普通环境变量。从已有活跃 Trellis 会话中启动 DSH 时，外层的 `TRELLIS_CONTEXT_ID` 原本会覆盖 DSH 的原生会话 ID。可选伴侣插件会为每次 shell 执行发布可信的 `DSH_TRELLIS_CONTEXT_ID`，beta 适配会优先解析它。未安装插件时，请先取消设置 `TRELLIS_CONTEXT_ID`，再从其他启用了 Trellis 的 AI host 启动 DSH。
 
+  每次 `dsh --profile headless` 调用都会创建新的 DSH 会话。请在同一会话中完成任务流程，或显式续接返回的 session id；多个独立 headless 调用不会自动共享 active-task 指针。
+
 除了 22 个已配置平台，Trellis 还能被任何遵循 `.agents/skills/` 约定（[agentskills.io](https://agentskills.io) 规范）的 AI 编码 agent 直接使用。Codex 的 skill 就写在这个目录下，这些文件也能被该生态的其他 agent（Amp、Cline、Deep Agents、Firebender、Warp 等）直接读取。这些平台上你通过 `.trellis/` 核心加上各自 agent 读取的 prelude 文件来管理 Trellis。
 
 ### 操作系统
