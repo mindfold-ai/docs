@@ -4,7 +4,7 @@ title: '多平台与团队配置'
 
 ## 多平台与团队配置
 
-Trellis 支持 21 个平台（Claude Code、Cursor、OpenCode、Codex、Kiro、Kilo、Gemini CLI、Antigravity、Devin（原 Windsurf）、Qoder、CodeBuddy、GitHub Copilot、Droid、Pi Agent、Oh My Pi、Reasonix、ZCode、Trae、Grok Build、Kimi Code、Snow CLI），以及任何读取 `.agents/skills/` 规范的 AI 编码 agent（Amp、Cline、Deep Agents、Firebender、Warp 等）。`.trellis/` 核心跨平台一致；差异在于**各平台如何交付 hook、extension、skill、sub-agent、command**。
+Trellis 支持 22 个平台（Claude Code、Cursor、OpenCode、Codex、Kiro、Kilo、Gemini CLI、Antigravity、Devin（原 Windsurf）、Qoder、CodeBuddy、GitHub Copilot、Droid、Pi Agent、Oh My Pi、Reasonix、ZCode、Trae、Grok Build、Kimi Code、Snow CLI、DeepSeek Harness），以及任何读取 `.agents/skills/` 规范的 AI 编码 agent（Amp、Cline、Deep Agents、Firebender、Warp 等）。`.trellis/` 核心跨平台一致；差异在于**各平台如何交付 hook、extension、skill、sub-agent、command**。
 
 ### 加入已初始化的 Trellis 项目
 
@@ -274,8 +274,9 @@ Trellis 还原生带有上面能力矩阵之外几个平台的配置器：
 - **Grok Build**（`--grok`）：写 `.grok/skills/`、`.grok/commands/`、`.grok/agents/`。sub-agent 通过 `spawn_subagent` 派发。没有 hook 集成。
 - **Kimi Code**（`--kimi`）：把 skill 写到 `.kimi-code/skills/` 和共享的 `.agents/skills/` 层；入口命令调用形式是 `/skill:trellis-{name}`。没有项目级 hook（Kimi 只支持用户级 `~/.kimi-code/config.toml`）。
 - **Snow CLI**（`--snow`）：写 `.snow/skills/`、`.snow/commands/`、`.snow/agents/`、`.snow/hooks/`（Python hook 为 session / user / sub-agent 事件输出 `additionalContext` JSON）。
+- **DeepSeek Harness**（`--dsh`）：写入 `.dsh/skills/`（用户可调用的入口 skill）以及共享的 `.agents/skills/` 层；agent 通过 skill-loader 工具按名字加载 skill。无 hook 集成，也没有项目级 sub-agent 定义面，因此 implement / check 阶段在主会话内联执行。
 
-除了 21 个已配置平台，Trellis 还能被任何遵循 `.agents/skills/` 约定（[agentskills.io](https://agentskills.io) 规范）的 AI 编码 agent 直接使用。Codex 的 skill 就写在这个目录下，这些文件也能被该生态的其他 agent（Amp、Cline、Deep Agents、Firebender、Warp 等）直接读取。这些平台上你通过 `.trellis/` 核心加上各自 agent 读取的 prelude 文件来管理 Trellis。
+除了 22 个已配置平台，Trellis 还能被任何遵循 `.agents/skills/` 约定（[agentskills.io](https://agentskills.io) 规范）的 AI 编码 agent 直接使用。Codex 的 skill 就写在这个目录下，这些文件也能被该生态的其他 agent（Amp、Cline、Deep Agents、Firebender、Warp 等）直接读取。这些平台上你通过 `.trellis/` 核心加上各自 agent 读取的 prelude 文件来管理 Trellis。
 
 ### 操作系统
 

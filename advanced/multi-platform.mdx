@@ -4,7 +4,7 @@ title: 'Multi-Platform and Team Configuration'
 
 ## Multi-Platform and Team Configuration
 
-Trellis ships on 21 platforms (Claude Code, Cursor, OpenCode, Codex, Kiro, Kilo, Gemini CLI, Antigravity, Devin (formerly Windsurf), Qoder, CodeBuddy, GitHub Copilot, Droid, Pi Agent, Oh My Pi, Reasonix, ZCode, Trae, Grok Build, Kimi Code, Snow CLI) and additionally supports any AI coding agent that reads the `.agents/skills/` standard (Amp, Cline, Deep Agents, Firebender, Warp, and more). The `.trellis/` core is identical everywhere; what differs is **how hooks, extensions, skills, sub-agents, and commands are delivered** on each platform.
+Trellis ships on 22 platforms (Claude Code, Cursor, OpenCode, Codex, Kiro, Kilo, Gemini CLI, Antigravity, Devin (formerly Windsurf), Qoder, CodeBuddy, GitHub Copilot, Droid, Pi Agent, Oh My Pi, Reasonix, ZCode, Trae, Grok Build, Kimi Code, Snow CLI, DeepSeek Harness) and additionally supports any AI coding agent that reads the `.agents/skills/` standard (Amp, Cline, Deep Agents, Firebender, Warp, and more). The `.trellis/` core is identical everywhere; what differs is **how hooks, extensions, skills, sub-agents, and commands are delivered** on each platform.
 
 ### Joining an Already-Initialized Trellis Project
 
@@ -282,8 +282,9 @@ Trellis also ships configurators for platforms not covered by the capability mat
 - **Grok Build** (`--grok`): writes `.grok/skills/`, `.grok/commands/`, `.grok/agents/`. Sub-agents are dispatched with `spawn_subagent`. No hook integration.
 - **Kimi Code** (`--kimi`): writes skills to `.kimi-code/skills/` plus the shared `.agents/skills/` layer; entry points are invoked as `/skill:trellis-{name}`. No project-level hooks (Kimi only supports a user-level `~/.kimi-code/config.toml`).
 - **Snow CLI** (`--snow`): writes `.snow/skills/`, `.snow/commands/`, `.snow/agents/`, and `.snow/hooks/` (Python hooks emit `additionalContext` JSON for session / user / sub-agent events).
+- **DeepSeek Harness** (`--dsh`): writes `.dsh/skills/` (user-invocable entry skills) plus the shared `.agents/skills/` layer; the agent loads skills by name through its skill-loader tool. No hook integration and no project-level sub-agent surface, so implement / check run inline in the main session.
 
-Beyond the 21 configured platforms, Trellis can be consumed by any AI coding agent that follows the `.agents/skills/` convention (the [agentskills.io](https://agentskills.io) standard). Codex writes its skills there, and the files are directly usable by other agents in that ecosystem (Amp, Cline, Deep Agents, Firebender, Warp, and more). On those platforms you manage Trellis through the `.trellis/` core plus whatever prelude file the agent reads.
+Beyond the 22 configured platforms, Trellis can be consumed by any AI coding agent that follows the `.agents/skills/` convention (the [agentskills.io](https://agentskills.io) standard). Codex writes its skills there, and the files are directly usable by other agents in that ecosystem (Amp, Cline, Deep Agents, Firebender, Warp, and more). On those platforms you manage Trellis through the `.trellis/` core plus whatever prelude file the agent reads.
 
 ### Operating Systems
 
