@@ -1,0 +1,61 @@
+---
+title: 'v0.6.16'
+description: '2026-08-27'
+---
+
+Task lifecycle commands, a context-manifest gate for sub-agent dispatch, reversible ablation, the OpenCode mem reader restored, and a batch of hook/channel fixes.
+
+## Enhancements
+
+### Context manifest gate
+
+`task.py validate` now fails a seeded `implement.jsonl` / `check.jsonl` with zero curated entries, and `task.py start` refuses to start such a task unless `--allow-empty-context` is passed. The sub-agent injection hook also states in the prompt when no curated context was injected, instead of a stderr-only warning. Absent manifests (platforms without sub-agents) are not gated. (#573)
+
+### Task lifecycle commands
+
+- `task.py rename <task> <new-slug> [--dry-run]` renames the directory and rewrites `task.json` identity, parent/child references, and jsonl manifests together.
+- `task.py start` records branch metadata; `task.py archive` validates it.
+- Developer identity resolution works in linked git worktrees.
+- `task.py create` seeds `implement.jsonl` / `check.jsonl` empty instead of with placeholder rows. (#578)
+
+### Reversible ablation
+
+`trellis ablate` removes every Trellis-managed file from a project and stores the removed state under an external root; `trellis restore` puts it back. Pre-flight conflict checks, project locking, and rollback on failure. (#538)
+
+### Resumable session recorder
+
+`add_session.py` is now a state machine: each step is idempotent, writes are atomic, and a failed run resumes instead of leaving a half-committed session record. (#577)
+
+### OpenCode session reader restored
+
+`trellis mem` reads OpenCode 1.2+ SQLite session storage again — zero-dependency parser, no native module, WAL-aware. (#574)
+
+### OMP prompt-injection skip keyword
+
+`prompt_injection.skip_keyword` in `.trellis/config.yaml` now works on OMP: a prompt containing the keyword skips workflow-state injection for that turn. (#586)
+
+### ZCode bridge hint
+
+`init` / `update` on ZCode print an install hint for the optional trellis-bridge plugin, for 3.6–3.7 builds that disable project-level hooks.
+
+## Bug Fixes
+
+- `add_session.py` and `task.py archive` auto-commits use explicit pathspecs and no longer sweep pre-staged unrelated files into the chore commit (#579).
+- Path containment accepts a `.trellis` that is a symlink into an external store (#567).
+- Task script runtime hardening: git `index.lock` retry, JSON read diagnostics, safer subprocess cleanup (#576).
+- `trellis update` repairs receipt entries for files already byte-identical to their template (#575).
+- The Pi extension resolves the Trellis project root from the session cwd (#581).
+- The sub-agent context hook contains jsonl-referenced file reads to the task base path (#584) and surfaces unreadable active-task records (#544).
+- Channel: UTF-8 preserved across incremental event reads (#569), `seq` continues after a torn `events.jsonl` tail (#564), stdout drained before supervisor exit (#542), Claude system prompt passed as a file to avoid argv limits (#555).
+- OMP: task context injection is byte-budgeted with `[truncated]` / `[omitted]` markers, refreshes after file changes (#541), and deduplicates shared files (#540).
+- OpenCode: context injected via `messages.transform` so TUI and history stay clean (#563).
+- `workflow.md` routing blocks are no longer dropped for four platforms whose marker labels did not match their platform ids.
+
+## Upgrade
+
+```bash
+npm install -g @mindfoldhq/trellis@latest
+trellis update
+```
+
+No `--migrate` required.

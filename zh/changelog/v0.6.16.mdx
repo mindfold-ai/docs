@@ -1,0 +1,61 @@
+---
+title: 'v0.6.16'
+description: '2026-08-27'
+---
+
+任务生命周期命令、面向 sub-agent 派发的上下文清单门禁、可逆的 Trellis 移除、OpenCode mem 读取器回归，以及一批 hook/channel 修复。
+
+## 功能增强
+
+### 上下文清单门禁
+
+`task.py validate` 现在会将没有任何策展条目的 `implement.jsonl` / `check.jsonl` 判为失败；`task.py start` 会拒绝启动此类任务，除非传入 `--allow-empty-context`。sub-agent 注入 hook 也会在提示词中明确声明未注入任何策展上下文，而不再只是 stderr 警告。文件不存在（无 sub-agent 的平台）不受门禁约束。（#573）
+
+### 任务生命周期命令
+
+- `task.py rename <task> <new-slug> [--dry-run]` 一次性重命名目录并同步改写 `task.json` 身份字段、父子引用和 jsonl 清单。
+- `task.py start` 记录分支元数据；`task.py archive` 校验它。
+- 开发者身份解析支持 linked git worktree。
+- `task.py create` 生成空的 `implement.jsonl` / `check.jsonl`，不再写入占位行。（#578）
+
+### 可逆移除
+
+`trellis ablate` 从项目中移除所有 Trellis 托管文件，并将状态保存到外部根目录；`trellis restore` 完整还原。带前置冲突检查、项目锁与失败回滚。（#538）
+
+### 可恢复的会话记录器
+
+`add_session.py` 改为状态机：每一步幂等、写入原子化，失败后可续跑，不再留下半提交的会话记录。（#577）
+
+### OpenCode 会话读取器回归
+
+`trellis mem` 重新支持读取 OpenCode 1.2+ 的 SQLite 会话存储——零依赖解析器，无原生模块，支持 WAL。（#574）
+
+### OMP 提示词注入跳过关键字
+
+`.trellis/config.yaml` 中的 `prompt_injection.skip_keyword` 现已在 OMP 上生效：提示词包含该关键字时，本轮跳过 workflow-state 注入。（#586）
+
+### ZCode bridge 提示
+
+在 ZCode 上执行 `init` / `update` 会输出可选 trellis-bridge 插件的安装提示，用于禁用了项目级 hook 的 3.6–3.7 版本。
+
+## 问题修复
+
+- `add_session.py` 与 `task.py archive` 的自动提交使用显式 pathspec，不再把预先暂存的无关文件卷入 chore 提交（#579）。
+- 路径包含检查接受符号链接到外部存储的 `.trellis`（#567）。
+- 任务脚本运行时加固：git `index.lock` 重试、JSON 读取诊断、更安全的子进程清理（#576）。
+- `trellis update` 会修复与模板字节一致但回执缺失的文件条目（#575）。
+- Pi 扩展从会话 cwd 解析 Trellis 项目根（#581）。
+- sub-agent 上下文 hook 将 jsonl 引用的文件读取限制在任务基路径内（#584），并显式暴露无法读取的活动任务记录（#544）。
+- Channel：增量事件读取跨块保留 UTF-8（#569）、`events.jsonl` 尾部截断后 `seq` 正确续接（#564）、supervisor 退出前排空 stdout（#542）、Claude 系统提示词改为文件传递以规避 argv 上限（#555）。
+- OMP：任务上下文注入按字节预算裁剪并输出 `[truncated]` / `[omitted]` 标记，文件变更后刷新（#541），共享文件去重（#540）。
+- OpenCode：改用 `messages.transform` 注入上下文，TUI 与历史记录保持干净（#563）。
+- `workflow.md` 的路由块不再因标记标签与平台 id 不一致而在四个平台上丢失。
+
+## 升级
+
+```bash
+npm install -g @mindfoldhq/trellis@latest
+trellis update
+```
+
+无需 `--migrate`。
