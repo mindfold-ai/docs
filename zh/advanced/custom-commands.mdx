@@ -8,7 +8,7 @@ Trellis 原生带的 slash 命令留得很少。Agent-capable 平台（Claude Co
 
 ### 命令文件格式和位置
 
-22 个平台按交付形态分三组：
+23 个平台按交付形态分三组：
 
 **显式 slash 命令**——用户输入 `/trellis:<name>`，平台把命令文件内容注入为 prompt。
 
@@ -23,6 +23,7 @@ Trellis 原生带的 slash 命令留得很少。Agent-capable 平台（Claude Co
 | CodeBuddy   | `.codebuddy/commands/trellis/{name}.md`    | `/trellis:{name}`                 |
 | Droid       | `.factory/commands/trellis/{name}.md`      | `/trellis:{name}`                 |
 | Pi Agent    | `.pi/prompts/trellis-{name}.md`            | `/trellis-{name}`                 |
+| PI-Desktop  | `.pi/prompts/trellis-{name}.md`            | `/trellis-{name}`                 |
 | Copilot     | `.github/prompts/trellis-{name}.prompt.md` | prompt 文件选择器                 |
 
 命令文件是 Markdown；Gemini 用 TOML（`prompt = """..."""` 字段）。

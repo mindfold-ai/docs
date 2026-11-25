@@ -4,7 +4,7 @@ title: 'Multi-Platform and Team Configuration'
 
 ## Multi-Platform and Team Configuration
 
-Trellis ships on 22 platforms (Claude Code, Cursor, OpenCode, Codex, Kiro, Kilo, Gemini CLI, Antigravity, Devin (formerly Windsurf), Qoder, CodeBuddy, GitHub Copilot, Droid, Pi Agent, Oh My Pi, Reasonix, ZCode, Trae, Grok Build, Kimi Code, Snow CLI, DeepSeek Harness) and additionally supports any AI coding agent that reads the `.agents/skills/` standard (Amp, Cline, Deep Agents, Firebender, Warp, and more). The `.trellis/` core is identical everywhere; what differs is **how hooks, extensions, skills, sub-agents, and commands are delivered** on each platform.
+Trellis ships on 23 platforms (Claude Code, Cursor, OpenCode, Codex, Kiro, Kilo, Gemini CLI, Antigravity, Devin (formerly Windsurf), Qoder, CodeBuddy, GitHub Copilot, Droid, Pi Agent, PI-Desktop, Oh My Pi, Reasonix, ZCode, Trae, Grok Build, Kimi Code, Snow CLI, DeepSeek Harness) and additionally supports any AI coding agent that reads the `.agents/skills/` standard (Amp, Cline, Deep Agents, Firebender, Warp, and more). The `.trellis/` core is identical everywhere; what differs is **how hooks, extensions, skills, sub-agents, and commands are delivered** on each platform.
 
 ### Joining an Already-Initialized Trellis Project
 
@@ -258,13 +258,31 @@ Layout:
 
 The extension stores active task state under `.trellis/.runtime/sessions/<session-key>.json`, so each Pi window/session can work on its own task without taking over another window.
 
+### PI-Desktop
+
+```bash
+trellis init -u your-name --pi-desktop
+```
+
+PI-Desktop is extension-backed and reuses the Pi Agent surface. Trellis writes the same prompts, agents, and skills, then the host loads the plugin wrapper from `.pi-desktop/` and injects task context before `Bash` commands and sub-agent runs.
+
+Layout:
+
+- `.pi-desktop/trellis/manifest.json` + `.pi-desktop/trellis/main.js`: the plugin wrapper the host loads; `contributes.agentExtensions` registers `agent/index.ts`
+- `.pi-desktop/trellis/agent/index.ts`: session context, `Bash` `TRELLIS_CONTEXT_ID` propagation, and sub-agent JSONL injection
+- `.pi/prompts/trellis-{name}.md`: session-boundary prompts (`finish-work`, `continue`; `start` only where applicable) — the same files Pi Agent reads
+- `.pi/agents/{name}.md`: `trellis-implement`, `trellis-check`, `trellis-research` via host sub-agent discovery — the same files Pi Agent reads
+- `.agents/skills/trellis-{name}/SKILL.md`: the five Trellis workflow skills (shared layer) — the same files Pi Agent reads
+
+PI-Desktop ships no `settings.json` of its own: runtime behavior comes from the plugin at `.pi-desktop/trellis/agent/index.ts`. Sub-agents are dispatched through the host `Task` tool, and the shell tool is `Bash` (the shell behind it is user-configurable: PowerShell, cmd, git-bash, or bash). `trellis pi-desktop {install,status,uninstall}` manages the plugin, and global sub-agents go to `~/.agents/subagents`.
+
 ### Oh My Pi
 
 ```bash
 trellis init -u your-name --omp
 ```
 
-Oh My Pi is extension-backed, like Pi Agent. Trellis writes the same workflow primitives, then the extension resolves the current session id and injects task context before Bash commands and sub-agent runs. Unlike Pi Agent, Oh My Pi has no `settings.json` — the native provider auto-discovers all subdirectories under `.omp/`.
+Oh My Pi is extension-backed, like Pi Agent. Trellis writes the same workflow primitives, then the extension resolves the current session id and injects task context before Bash commands and sub-agent runs. Unlike Pi Agent and PI-Desktop, Oh My Pi has no `settings.json` — the native provider auto-discovers all subdirectories under `.omp/`.
 
 Layout:
 
@@ -279,6 +297,7 @@ The extension stores active task state under `.trellis/.runtime/sessions/<sessio
 
 Trellis also ships configurators for platforms not covered by the capability matrix:
 
+- **PI-Desktop** (`--pi-desktop`): extension-backed (see the section above); writes the `.pi-desktop/trellis/` plugin wrapper and reuses the Pi Agent prompt, agent, and skill files. `trellis pi-desktop {install,status,uninstall}` manages install, status, and uninstall.
 - **Kilo** (`--kilo`): writes `.kilocode/workflows/` (commands: `start`, `finish-work`) and `.kilocode/skills/trellis-{name}/SKILL.md` (the trellis skills). No hook integration.
 - **Antigravity** (`--antigravity`): writes Antigravity-native workflow files for the three commands.
 - **Devin** (`--devin`, formerly Windsurf): writes Devin-native workflow and skill files. The old `--windsurf` flag still works as a deprecated alias.
@@ -294,7 +313,7 @@ Trellis also ships configurators for platforms not covered by the capability mat
 
   Each `dsh --profile headless` invocation creates a fresh DSH session. Keep a task flow in one session or explicitly resume its returned session id; separate headless invocations do not share an active-task pointer automatically.
 
-Beyond the 22 configured platforms, Trellis can be consumed by any AI coding agent that follows the `.agents/skills/` convention (the [agentskills.io](https://agentskills.io) standard). Codex writes its skills there, and the files are directly usable by other agents in that ecosystem (Amp, Cline, Deep Agents, Firebender, Warp, and more). On those platforms you manage Trellis through the `.trellis/` core plus whatever prelude file the agent reads.
+Beyond the 23 configured platforms, Trellis can be consumed by any AI coding agent that follows the `.agents/skills/` convention (the [agentskills.io](https://agentskills.io) standard). Codex writes its skills there, and the files are directly usable by other agents in that ecosystem (Amp, Cline, Deep Agents, Firebender, Warp, and more). On those platforms you manage Trellis through the `.trellis/` core plus whatever prelude file the agent reads.
 
 ### Operating Systems
 

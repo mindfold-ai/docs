@@ -8,7 +8,7 @@ Trellis ships a deliberately small set of slash commands. On agent-capable platf
 
 ### Command File Format and Location
 
-Trellis groups the 22 configured platforms into three delivery models:
+Trellis groups the 23 configured platforms into three delivery models:
 
 **Explicit slash commands** — the user types `/trellis:<name>`; the platform injects the command file's content as a prompt.
 
@@ -23,6 +23,7 @@ Trellis groups the 22 configured platforms into three delivery models:
 | CodeBuddy   | `.codebuddy/commands/trellis/{name}.md`    | `/trellis:{name}`                  |
 | Droid       | `.factory/commands/trellis/{name}.md`      | `/trellis:{name}`                  |
 | Pi Agent    | `.pi/prompts/trellis-{name}.md`            | `/trellis-{name}`                  |
+| PI-Desktop  | `.pi/prompts/trellis-{name}.md`            | `/trellis-{name}`                  |
 | Copilot     | `.github/prompts/trellis-{name}.prompt.md` | prompt-file picker                 |
 
 Command files are Markdown; Gemini uses TOML (with a `prompt = """..."""` field).

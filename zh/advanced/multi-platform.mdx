@@ -4,7 +4,7 @@ title: '多平台与团队配置'
 
 ## 多平台与团队配置
 
-Trellis 支持 22 个平台（Claude Code、Cursor、OpenCode、Codex、Kiro、Kilo、Gemini CLI、Antigravity、Devin（原 Windsurf）、Qoder、CodeBuddy、GitHub Copilot、Droid、Pi Agent、Oh My Pi、Reasonix、ZCode、Trae、Grok Build、Kimi Code、Snow CLI、DeepSeek Harness），以及任何读取 `.agents/skills/` 规范的 AI 编码 agent（Amp、Cline、Deep Agents、Firebender、Warp 等）。`.trellis/` 核心跨平台一致；差异在于**各平台如何交付 hook、extension、skill、sub-agent、command**。
+Trellis 支持 23 个平台（Claude Code、Cursor、OpenCode、Codex、Kiro、Kilo、Gemini CLI、Antigravity、Devin（原 Windsurf）、Qoder、CodeBuddy、GitHub Copilot、Droid、Pi Agent、PI-Desktop、Oh My Pi、Reasonix、ZCode、Trae、Grok Build、Kimi Code、Snow CLI、DeepSeek Harness），以及任何读取 `.agents/skills/` 规范的 AI 编码 agent（Amp、Cline、Deep Agents、Firebender、Warp 等）。`.trellis/` 核心跨平台一致；差异在于**各平台如何交付 hook、extension、skill、sub-agent、command**。
 
 ### 加入已初始化的 Trellis 项目
 
@@ -244,13 +244,31 @@ Pi Agent 走 extension，不走 Python hook。Trellis 写入同样的 workflow �
 
 extension 把当前任务状态存在 `.trellis/.runtime/sessions/<session-key>.json`，所以每个 Pi 窗口/会话都可以有自己的任务，不会抢别的窗口。
 
+### PI-Desktop
+
+```bash
+trellis init -u your-name --pi-desktop
+```
+
+PI-Desktop 与 Pi Agent 一样走 extension，并复用 Pi Agent 的文件面。Trellis 写入同样的 prompt、agent 和 skill，然后宿主从 `.pi-desktop/` 加载 plugin wrapper，在 `Bash` 命令和 sub-agent 运行前注入任务上下文。
+
+布局：
+
+- `.pi-desktop/trellis/manifest.json` + `.pi-desktop/trellis/main.js`：宿主加载的 plugin wrapper，`contributes.agentExtensions` 注册 `agent/index.ts`
+- `.pi-desktop/trellis/agent/index.ts`：会话上下文、`Bash` `TRELLIS_CONTEXT_ID` 传递、sub-agent JSONL 注入
+- `.pi/prompts/trellis-{name}.md`：会话边界 prompt（`finish-work`、`continue`；`start` 只在需要手动入口的平台存在）——与 Pi Agent 读的是同一批文件
+- `.pi/agents/{name}.md`：`trellis-implement`、`trellis-check`、`trellis-research`，由宿主发现 sub-agent——与 Pi Agent 读的是同一批文件
+- `.agents/skills/trellis-{name}/SKILL.md`：5 个 Trellis 工作流 skill（共享层）——与 Pi Agent 读的是同一批文件
+
+PI-Desktop 没有自己的 `settings.json`：运行时行为来自 `.pi-desktop/trellis/agent/index.ts` 这个插件。sub-agent 通过宿主的 `Task` 工具派发，shell 工具名是 `Bash`（底层 shell 可由用户配置：PowerShell、cmd、git-bash 或 bash）。插件的安装 / 查看状态 / 卸载由 `trellis pi-desktop {install,status,uninstall}` 管理，全局 sub-agent 写到 `~/.agents/subagents`。
+
 ### Oh My Pi
 
 ```bash
 trellis init -u your-name --omp
 ```
 
-Oh My Pi 与 Pi Agent 一样走 extension。Trellis 写入同样的 workflow 原语，然后 extension 解析当前 session id，在 Bash 命令和 sub-agent 运行前注入任务上下文。与 Pi Agent 不同，Oh My Pi 没有 `settings.json` —— 原生 provider 会自动发现 `.omp/` 下的所有子目录。
+Oh My Pi 与 Pi Agent 一样走 extension。Trellis 写入同样的 workflow 原语，然后 extension 解析当前 session id，在 Bash 命令和 sub-agent 运行前注入任务上下文。与 Pi Agent 和 PI-Desktop 不同，Oh My Pi 没有 `settings.json` —— 原生 provider 会自动发现 `.omp/` 下的所有子目录。
 
 布局：
 
@@ -265,6 +283,7 @@ extension 把当前任务状态存在 `.trellis/.runtime/sessions/<session-key>.
 
 Trellis 还原生带有上面能力矩阵之外几个平台的配置器：
 
+- **PI-Desktop**（`--pi-desktop`）：走 extension（见上一节）；写 `.pi-desktop/trellis/` 的 plugin wrapper，复用 Pi Agent 的 prompt、agent 和 skill 文件。安装、查看状态、卸载由 `trellis pi-desktop {install,status,uninstall}` 管理。
 - **Kilo**（`--kilo`）：写 `.kilocode/workflows/`（命令：`start`、`finish-work`）和 `.kilocode/skills/trellis-{name}/SKILL.md`（trellis skill）。没有 hook 集成。
 - **Antigravity**（`--antigravity`）：写 Antigravity 原生的 workflow 文件（3 个命令）。
 - **Devin**（`--devin`，原 Windsurf）：写 Devin 原生的 workflow 和 skill 文件。旧的 `--windsurf` flag 仍作为已废弃的别名可用。
@@ -276,7 +295,7 @@ Trellis 还原生带有上面能力矩阵之外几个平台的配置器：
 - **Snow CLI**（`--snow`）：写 `.snow/skills/`、`.snow/commands/`、`.snow/agents/`、`.snow/hooks/`（Python hook 为 session / user / sub-agent 事件输出 `additionalContext` JSON）。
 - **DeepSeek Harness**（`--dsh`）：写入 `.dsh/skills/`（用户可调用的入口 skill）以及共享的 `.agents/skills/` 层；agent 通过 skill-loader 工具按名字加载 skill。无 hook 集成，也没有项目级 sub-agent 定义面，因此 implement / check 阶段在主会话内联执行。
 
-除了 22 个已配置平台，Trellis 还能被任何遵循 `.agents/skills/` 约定（[agentskills.io](https://agentskills.io) 规范）的 AI 编码 agent 直接使用。Codex 的 skill 就写在这个目录下，这些文件也能被该生态的其他 agent（Amp、Cline、Deep Agents、Firebender、Warp 等）直接读取。这些平台上你通过 `.trellis/` 核心加上各自 agent 读取的 prelude 文件来管理 Trellis。
+除了 23 个已配置平台，Trellis 还能被任何遵循 `.agents/skills/` 约定（[agentskills.io](https://agentskills.io) 规范）的 AI 编码 agent 直接使用。Codex 的 skill 就写在这个目录下，这些文件也能被该生态的其他 agent（Amp、Cline、Deep Agents、Firebender、Warp 等）直接读取。这些平台上你通过 `.trellis/` 核心加上各自 agent 读取的 prelude 文件来管理 Trellis。
 
 ### 操作系统
 
